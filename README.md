@@ -6,6 +6,9 @@ ResCMS Go is a powerful, lightweight, and highly configurable Content Management
 
 - **High-Performance Go Backend**: Leveraging the speed and efficiency of Go for rapid content delivery.
 - **Dynamic Theme Engine**: Swap entire site aesthetics in real-time. Supports ZIP theme uploads, extraction, and exporting.
+- **Unified Editorial Experience**: Standardized on a customized **Quill** editor for both Articles and Pages.
+    - **Visual Image Resizing**: Professional resizing handles and display indicators.
+    - **Optimized Media**: Images are uploaded to the server as files, avoiding database bloat from Base64.
 - **Reactive Admin UI**: A fully-featured administrative dashboard built with Alpine.js and Tailwind CSS for a seamless management experience.
 - **Axentix Integration**: Public themes are built on the Axentix CSS framework, providing a component-based, stable layout engine.
 - **Theme Hot Reloading**: Instant feedback for theme developers—see changes to templates and partials without restarting the server.
@@ -16,11 +19,11 @@ ResCMS Go is a powerful, lightweight, and highly configurable Content Management
 
 ## 🛠 Tech Stack
 
-- **Backend**: Go (Golang)
+- **Backend**: Go (Golang) 1.22+
 - **Database**: SQLite (via GORM)
 - **Frontend Logic**: Alpine.js
 - **CSS Frameworks**: Axentix (Public Themes), Tailwind CSS (Admin Dashboard)
-- **Templating**: Go `html/template` with extended FuncMaps
+- **Rich Text**: Quill with Custom Image Resize and Server Upload adapters.
 
 ## 📦 Installation
 
@@ -48,23 +51,6 @@ Themes are located in the `/themes` directory. Each theme requires:
 - `partials/`: Reusable components like headers and footers.
 
 During development, ResCMS automatically reloads theme templates on every request, providing a "Hot Reload" experience.
-
-## 🗺 Roadmap
-
-### Current Focus: Rich Text & Media
-- [ ] Stabilize Quill Editor for Pages (retrieval & image resizing fixes)
-- [ ] Finalize CKEditor for Posts with full image upload/resize support
-- [ ] Standardize editorial styling across all themes (Classic & Pixel)
-
-### Upcoming: Advanced Theme Management
-- **Theme Editor**: Integrated code editor for JS and SCSS directly in the admin dashboard.
-  - Support for HTML, CSS, and JS with syntax highlighting and auto-formatting.
-- **Theme Cloning**: Allow users to duplicate existing themes from the UI for quick customization.
-- **In-Browser Customization**: Edit theme files without needing FTP or shell access.
-
-### Long Term
-- **Plugin System**: Hook-based architecture for extending CMS functionality.
-- **Multi-User Collaboration**: Live editing and revision history for posts.
 
 ## 📄 License
 

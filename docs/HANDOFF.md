@@ -1,24 +1,35 @@
-# Handoff Document
+# ResCMS Go Handoff
 
-## Project Overview
-ResCMS Go is a lightweight, page-based CMS built for speed and flexibility. It replaces the legacy Perl implementation with a modern Go backend and a reactive admin interface.
+## Project Status: STABLE (v2.0.0)
 
-## Current Technical Stack
-- **Backend**: Go 1.22+
-- **Database**: SQLite (`data/rescms.db`)
-- **Admin UI**: Alpine.js, Axentix, SortableJS, CKEditor 5 (Posts), Quill (Pages)
-- **Public UI**: Axentix CSS framework
+ResCMS Go has been fully migrated to a Go backend and stabilized for production editorial use. The system is lightweight, fast, and features a modular theme engine.
 
-## Key Operations
-- **Run**: `go run cmd/res-cms/main.go`
-- **Default Port**: `:3009`
-- **Admin URL**: `/manage`
+## 🛠 Technical Stack
+- **Backend**: Go 1.22+ (using standard `http.ServeMux` with path values).
+- **Database**: SQLite (`res-cms.db`).
+- **Editor**: Quill with custom Image Resize and Server Upload handlers.
+- **Frontend**: Alpine.js for reactivity, Tailwind CSS for Admin, Axentix for Themes.
+- **Theme Engine**: Dynamic template loader with hot-reload in development.
 
-## Critical Path for Next Dev
-1. **Quill Retrieval**: We are currently experiencing issues where saved content sometimes fails to load into the Quill editor on the Pages edit screen. We've moved to a textarea-based transfer method, but this needs verification.
-2. **Image Resizing**: The image resize module for Quill is integrated via CDN but has activation issues. Ensure `window.Quill` is defined before module load.
-3. **Theme Editor**: The next major feature is an in-browser theme editor for JS and SCSS files.
+## 🔑 Key Features & Operations
+- **Admin Dashboard**: Accessible at `/manage`.
+- **Theme Management**: 
+    - Edit theme files directly via the Monaco-based Editor.
+    - Copy existing themes via the "Copy" action in the Theme list.
+- **Media**: Images uploaded via the editor are saved to `/public/uploads/`. The `/api/upload/image` endpoint is protected by Auth middleware.
 
-## Database Schema
-The system uses a unified `pages` table for both standalone pages and category-like taxonomies. 
-`SortOrder` in the `pages` table determines the site-wide navigation order.
+## ⚠️ Important Implementation Details
+- **Pages as Categories**: The system uses the `models.Page` model for both standalone pages and article classifications. Non-system pages are listed as "Pages" in the Article sidebar.
+- **JSON Injection**: Use the `| js` template filter when injecting Go models into Alpine.js `x-init` or other scripts to avoid syntax errors.
+- **Asset Paths**: Use `/themes/[theme-name]/` for theme assets and `/static/` for shared CMS assets.
+
+## 🗺 Critical Path for Next Development
+1. **Media Library**: Build a dedicated file browser in the admin panel to manage existing uploads.
+2. **Theme Packaging**: Implement ZIP export and ZIP upload for themes.
+3. **Revision History**: Add a table to track content versions and allow rollbacks.
+
+## 🚀 Running the Project
+```bash
+go run cmd/res-cms/main.go
+```
+The application listens on `:3000` by default.

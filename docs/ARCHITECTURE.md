@@ -7,8 +7,9 @@ ResCMS is a modern, Go-based Content Management System. It features an API-drive
 - **Backend**: Go (Golang)
 - **Database**: SQLite (via GORM)
 - **Frontend Logic**: Alpine.js
-- **Styling**: Tailwind CSS (for Admin/Classic) & Vanilla CSS (for Pixel Theme)
+- **Styling**: Tailwind CSS (for Admin/Classic) & Axentix CSS (for Pixel Theme)
 - **Templates**: `html/template` (Go Standard Library)
+- **Editor**: Quill with custom modular extensions.
 
 ## Core Components
 
@@ -21,19 +22,21 @@ The Theme Engine handles the modular delivery of the public-facing UI.
 
 ### 2. Admin UI (`internal/ui/admin`)
 The administrative interface is decoupled from user themes.
-- **Location**: `internal/ui/admin` (Protected internal path)
-- **Reactive Design**: Built with Alpine.js and Pines UI for a seamless, SPA-like experience within a server-rendered shell.
+- **Location**: `internal/ui/admin`
+- **Reactive Design**: Built with Alpine.js, ensuring a seamless, SPA-like experience within a server-rendered shell.
+- **Theme Editor**: Located at `/manage/theme/editor`, allows direct modification of theme source code.
 
 ### 3. API Handlers (`internal/handlers`)
-- **API v1**: JSON endpoints for posts, categories, and tags.
+- **API v2**: JSON endpoints for posts, pages, and tags.
 - **Admin Handlers**: Secure routes for content management, user administration, and theme control.
 - **Root Handlers**: Dynamic template rendering that bridges the Theme Engine and the Go backend.
 
 ### 4. Database Models (`internal/models`)
-- **Entry**: Blog posts and pages.
-- **Account**: User management and authentication.
-- **Comment**: Interactive feedback system.
-- **Category/Tag**: Taxonomies for content organization.
+- **Entry**: Blog posts.
+- **Page**: Standalone pages and categories (taxonomies).
+- **User**: Authentication and role-based access.
+- **Comment**: Interactive feedback system linked to Entries.
+- **Tag**: Metadata for Article discovery.
 
 ## Project Structure
 ```text
@@ -43,15 +46,12 @@ res-cms-go/
 │   ├── db/               # GORM initialization
 │   ├── handlers/         # API and Web handlers
 │   ├── middleware/       # Auth and Flash logic
-│   ├── models/           # Data structures
+│   ├── models/           # Data structures (Entry, Page, User, etc.)
 │   ├── session/          # Secure session management
 │   ├── theme/            # Theme Engine core
-│   └── ui/               # System UI (Admin)
+│   └── ui/               # System UI (Admin Templates)
 ├── themes/               # Modular public skins
-├── public/               # Shared static assets (JS libraries, etc.)
-├── data/                 # SQLite database and uploads
-└── docs/                 # Documentation
+├── public/               # Static assets & User uploads
+├── docs/                 # Documentation
+└── res-cms.db            # SQLite Database
 ```
-
-## Theme Specification
-See [THEME_SPEC.md](./THEME_SPEC.md) for detailed information on creating and managing themes.
