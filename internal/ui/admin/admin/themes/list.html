@@ -1,57 +1,70 @@
 {{define "content"}}
-<div class="space-y-8">
-    <div class="flex justify-between items-center">
+<div x-data="{ openUpload: false }" x-cloak class="grix xs1 gutter-xs4" style="width: 100%;">
+    <div class="d-flex fx-row fx-space-between vcenter">
         <div>
-            <h1 class="text-3xl font-black text-slate-900">Theme Engine</h1>
-            <p class="text-slate-500">Manage your modular Pixel Art themes and UI standards.</p>
+            <h1 class="font-w900 font-s6 text-slate-900 mb-0">Appearance</h1>
+            <p class="text-grey font-s1 font-w600 mb-0 mt-1">Active UI: Axentix Framework v2.3.0</p>
         </div>
-        <div x-data="{ open: false }">
-            <button @click="open = true" class="bg-blue-600 text-white font-bold px-6 py-3 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                Upload Theme (.zip)
-            </button>
-            
-            <!-- Upload Modal -->
-            <div x-show="open" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" x-cloak>
-                <div @click.away="open = false" class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
-                    <h3 class="text-xl font-bold mb-4">Upload New Theme</h3>
-                    <form action="/manage/themes/upload" method="POST" enctype="multipart/form-data" class="space-y-6">
-                        <div class="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-blue-400 transition-colors">
-                            <input type="file" name="theme_zip" accept=".zip" required class="hidden" id="theme-upload">
-                            <label for="theme-upload" class="cursor-pointer">
-                                <svg class="w-12 h-12 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                                <p class="text-sm text-slate-500">Click to select theme archive</p>
-                            </label>
-                        </div>
-                        <div class="flex gap-4">
-                            <button type="button" @click="open = false" class="flex-1 px-4 py-3 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
-                            <button type="submit" class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700">Upload</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+        <button @click="openUpload = true" class="btn blue rounded-1 shadow-1 d-flex vcenter font-w800">
+            <i class="fas fa-plus-circle mr-2"></i> Deploy Theme
+        </button>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <!-- Upload Modal -->
+    <div id="upload-theme-modal" class="modal white rounded-1 shadow-2 p-5" x-show="openUpload" x-cloak>
+        <div class="modal-header font-w900 font-s4 mb-4 text-slate-900">Install Theme</div>
+        <form action="/manage/themes/upload" method="POST" enctype="multipart/form-data">
+            <div class="p-5 border-all-2 border-dashed border-slate-light-4 rounded-1 text-center mb-4 bg-slate-light-5">
+                <input type="file" name="theme_zip" accept=".zip" required style="display: none;" id="theme-upload">
+                <label for="theme-upload" style="cursor: pointer;">
+                    <i class="fas fa-cloud-upload-alt text-blue-light-3 font-s8 mb-3"></i>
+                    <p class="text-grey font-w800 font-s1 mb-0">Select .zip archive</p>
+                </label>
+            </div>
+            <div class="d-flex fx-row fx-right g-gap-3">
+                <button type="button" @click="openUpload = false" class="btn white text-grey shadow-0 modal-close font-w700">Cancel</button>
+                <button type="submit" class="btn blue rounded-1 shadow-1 font-w800">Install</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Theme Grid using grix -->
+    <div class="grix xs1 sm2 md3 lg4 gutter-xs3 mt-4">
         <template x-for="theme in {{ .Themes | json }}" :key="theme.Name">
-            <div class="bg-white rounded-2xl border-2 transition-all overflow-hidden group" 
-                 :class="theme.Active ? 'border-blue-600 shadow-xl shadow-blue-50' : 'border-slate-100 hover:border-slate-200'">
-                <div class="aspect-video bg-slate-100 relative overflow-hidden flex items-center justify-center">
-                    <template x-if="theme.Active">
-                        <div class="absolute top-4 right-4 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">Active</div>
-                    </template>
-                    <div class="pixel-font text-2xl text-slate-300 opacity-50 group-hover:scale-110 transition-transform" x-text="theme.Name"></div>
+            <div class="card white rounded-1 transition-all overflow-hidden border-all-1 border-slate-light-4 group h-100 d-flex fx-col shadow-1 hover-shadow-3"
+                 style="position: relative;"
+                 :class="theme.Active ? 'border-blue-light-2 border-all-2' : ''">
+                
+                <template x-if="theme.Active">
+                    <span class="tag-status blue text-white shadow-1" style="position: absolute; top: 0.5rem; left: 0.5rem; z-index: 2;">Primary</span>
+                </template>
+
+                <div class="d-flex vcenter fx-center bg-slate-light-5 overflow-hidden" style="height: 140px; position: relative;">
+                    <i class="fas fa-swatchbook text-blue-light-4 opacity-30 font-s8 group-hover:scale-110 transition-transform"></i>
                 </div>
-                <div class="p-6">
-                    <h3 class="text-xl font-bold text-slate-900 mb-2" x-text="theme.Name"></h3>
-                    <div class="flex items-center gap-3 mt-6">
+                
+                <div class="p-4 border-top-1 border-slate-light-5 d-flex fx-col fx-space-between bg-white" style="flex: 1;">
+                    <div class="mb-4">
+                        <div class="d-flex fx-row fx-space-between vcenter">
+                            <h3 class="font-w900 font-s3 mb-0 text-slate-900 capitalize tracking-tight" x-text="theme.Name"></h3>
+                            <a :href="'/manage/themes/export/' + theme.Name" class="btn btn-small circle white text-grey border-all-1 border-slate-light-4 no-shadow" title="Export">
+                                <i class="fas fa-download"></i>
+                            </a>
+                        </div>
+                        <div class="mt-2">
+                            <span class="tag-status grey light-4 text-grey-dark-2 border-all-1 border-grey-light-3">v1.0.0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex vcenter w-100">
                         <template x-if="!theme.Active">
-                            <a :href="'/manage/themes/activate/' + theme.Name" class="flex-1 bg-slate-900 text-white text-center py-2.5 rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors">Activate</a>
+                            <a :href="'/manage/themes/activate/' + theme.Name" class="btn black btn-small rounded-1 font-w900 font-s1 py-2 tracking-widest" style="flex: 1;">ACTIVATE</a>
                         </template>
-                        <a :href="'/manage/themes/export/' + theme.Name" class="p-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors" title="Export Theme">
-                            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        </a>
+                        <template x-if="theme.Active">
+                            <div class="text-center py-2 bg-blue-light-5 rounded-1 border-all-1 border-blue-light-3" style="flex: 1;">
+                                <span class="text-blue font-w900 font-s1 uppercase tracking-widest">ACTIVE</span>
+                            </div>
+                        </template>
                     </div>
                 </div>
             </div>

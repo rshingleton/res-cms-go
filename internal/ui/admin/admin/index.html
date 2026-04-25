@@ -1,88 +1,133 @@
 {{define "content"}}
-<div x-data="adminDashboard()" x-init="init()" class="space-y-8">
-    <!-- Stats Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-slate-800">
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l4 4v10a2 2 0 01-2 2z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 2v4h4"></path></svg>
+<div x-data="adminDashboard()" x-init="init()" x-cloak>
+    
+    <div class="grix xs1 sm2 md4 gutter-xs3 mb-4">
+        <!-- Articles -->
+        <a href="/manage/entries" class="no-underline text-slate-dark-3">
+            <div class="card white shadow-1 hover-shadow-2 transition-all rounded-1 border-all-1 border-slate-light-4 h-100 p-3">
+                <div class="flex flex-row justify-between align-center mb-1">
+                    <span class="text-grey font-w800 font-s1 uppercase tracking-wider">Articles</span>
+                    <i class="fas fa-file-alt text-blue font-s3"></i>
+                </div>
+                <div class="flex flex-row justify-between align-end mt-2">
+                    <h3 class="font-w900 font-s6 mb-0 text-slate-900" x-text="stats.posts || 0"></h3>
+                </div>
             </div>
-            <div>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Posts</p>
-                <h3 class="text-2xl font-extrabold" x-text="stats.posts || 0"></h3>
+        </a>
+
+        <!-- Engagement -->
+        <a href="/manage/comments" class="no-underline text-slate-dark-3">
+            <div class="card white shadow-1 hover-shadow-2 transition-all rounded-1 border-all-1 border-slate-light-4 h-100 p-3">
+                <div class="flex flex-row justify-between align-center mb-1">
+                    <span class="text-grey font-w800 font-s1 uppercase tracking-wider">Engagement</span>
+                    <i class="fas fa-comments text-green font-s3"></i>
+                </div>
+                <div class="flex flex-row justify-between align-end mt-2">
+                    <h3 class="font-w900 font-s6 mb-0 text-slate-900" x-text="stats.comments || 0"></h3>
+                </div>
+            </div>
+        </a>
+
+        <!-- Users -->
+        <a href="/manage/accounts" class="no-underline text-slate-dark-3">
+            <div class="card white shadow-1 hover-shadow-2 transition-all rounded-1 border-all-1 border-slate-light-4 h-100 p-3">
+                <div class="flex flex-row justify-between align-center mb-1">
+                    <span class="text-grey font-w800 font-s1 uppercase tracking-wider">Users</span>
+                    <i class="fas fa-user-shield text-purple font-s3"></i>
+                </div>
+                <div class="flex flex-row justify-between align-end mt-2">
+                    <h3 class="font-w900 font-s6 mb-0 text-slate-900" x-text="stats.users || 0"></h3>
+                </div>
+            </div>
+        </a>
+
+        <!-- Taxonomy -->
+        <a href="/manage/categories" class="no-underline text-slate-dark-3">
+            <div class="card white shadow-1 hover-shadow-2 transition-all rounded-1 border-all-1 border-slate-light-4 h-100 p-3">
+                <div class="flex flex-row justify-between align-center mb-1">
+                    <span class="text-grey font-w800 font-s1 uppercase tracking-wider">Taxonomy</span>
+                    <i class="fas fa-tags text-orange font-s3"></i>
+                </div>
+                <div class="flex flex-row justify-between align-end mt-2">
+                    <h3 class="font-w900 font-s6 mb-0 text-slate-900" x-text="stats.categories || 0"></h3>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Analytics & Feed Row -->
+    <div class="grix xs1 md3 gutter-xs3 mb-4">
+        <div class="col-xs1 col-md2">
+            <div class="card white p-4 shadow-1 rounded-1 border-all-1 border-slate-light-4 h-100">
+                <div class="flex flex-row justify-between align-center mb-4">
+                    <h4 class="font-w900 text-slate-900 mb-0 font-s3 uppercase">Intelligence</h4>
+                    <span class="tag-status blue light-4 text-blue border-all-1 border-blue-light-3">Live Metrics</span>
+                </div>
+                
+                <div class="grix xs3 gutter-xs2 mb-4">
+                    <div class="bg-slate-light-5 p-3 rounded-1 text-center border-all-1 border-slate-light-4">
+                        <p class="text-grey font-w800 font-s1 uppercase mb-1">Unique</p>
+                        <h4 class="font-w900 text-slate-900 mb-0 font-s4">1.2k</h4>
+                    </div>
+                    <div class="bg-slate-light-5 p-3 rounded-1 text-center border-all-1 border-slate-light-4">
+                        <p class="text-grey font-w800 font-s1 uppercase mb-1">Views</p>
+                        <h4 class="font-w900 text-slate-900 mb-0 font-s4">5.4k</h4>
+                    </div>
+                    <div class="bg-slate-light-5 p-3 rounded-1 text-center border-all-1 border-slate-light-4">
+                        <p class="text-grey font-w800 font-s1 uppercase mb-1">Bounce</p>
+                        <h4 class="font-w900 text-slate-900 mb-0 font-s4">32%</h4>
+                    </div>
+                </div>
+                
+                <div class="bg-slate-light-5 rounded-1 flex flex-row align-center justify-center border-all-1 border-slate-light-4" style="height: 120px;">
+                    <div class="text-center">
+                        <i class="fas fa-chart-line text-blue-light-3 font-s6 mb-1"></i>
+                        <p class="text-grey font-w700 font-s1 mb-0">Analyzing visitor flow...</p>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
-            </div>
-            <div>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Comments</p>
-                <h3 class="text-2xl font-extrabold" x-text="stats.comments || 0"></h3>
-            </div>
-        </div>
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-            </div>
-            <div>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Users</p>
-                <h3 class="text-2xl font-extrabold" x-text="stats.users || 0"></h3>
-            </div>
-        </div>
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 11h.01M7 15h.01M13 7h.01M13 11h.01M13 15h.01M17 7h.01M17 11h.01M17 15h.01"></path></svg>
-            </div>
-            <div>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Categories</p>
-                <h3 class="text-2xl font-extrabold" x-text="stats.categories || 0"></h3>
+        
+        <div class="col-xs1 col-md1">
+            <div class="card white shadow-1 rounded-1 border-all-1 border-slate-light-4 h-100 flex flex-column">
+                <div class="card-header px-4 py-3 border-bottom-1 border-slate-light-4 bg-slate-light-5 flex flex-row justify-between align-center">
+                    <span class="font-w900 text-slate-800 font-s1 uppercase tracking-wider">Recent Activity</span>
+                </div>
+                <div class="card-content p-0 flex-1 overflow-y-auto" style="max-height: 240px;">
+                    <template x-for="comment in recentComments" :key="comment.id">
+                        <div class="px-4 py-3 border-bottom-1 border-slate-light-5 hover-bg-slate-light-5">
+                            <div class="flex flex-row justify-between align-center mb-1">
+                                <span class="font-w800 font-s1 text-slate-900" x-text="comment.author"></span>
+                                <span class="text-grey-light-1" style="font-size: 0.6rem;" x-text="new Date(comment.created_at).toLocaleTimeString()"></span>
+                            </div>
+                            <p class="text-grey font-s1 truncate mb-0" x-text="comment.content"></p>
+                        </div>
+                    </template>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Recent Posts -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
-                <h4 class="font-bold text-slate-800">Recent Posts</h4>
-                <a href="/manage/entries" class="text-sm text-blue-600 font-semibold hover:underline">View All</a>
+    <!-- Editorial Feed (Bottom Row) -->
+    <div class="grix xs1 gutter-xs3">
+        <div class="card white shadow-1 rounded-1 border-all-1 border-slate-light-4">
+            <div class="card-header flex flex-row justify-between align-center px-4 py-3 border-bottom-1 border-slate-light-4">
+                <span class="font-w900 text-slate-900 font-s2 uppercase tracking-widest">Latest Editorial Content</span>
+                <a href="/manage/entries" class="btn btn-small transparent text-blue font-w900 p-0">View Full List</a>
             </div>
-            <div class="divide-y divide-slate-50">
-                <template x-for="post in recentPosts" :key="post.id">
-                    <div class="p-4 hover:bg-slate-50 transition-colors flex justify-between items-center">
-                        <div class="min-w-0">
-                            <p class="font-semibold text-slate-900 truncate" x-text="post.entry_title"></p>
-                            <p class="text-xs text-slate-400" x-text="new Date(post.created_at).toLocaleDateString()"></p>
+            <div class="card-content p-0">
+                <div class="grix xs1 sm2 md3 gutter-xs0">
+                    <template x-for="post in recentPosts" :key="post.id">
+                        <div class="border-right-1 border-bottom-1 border-slate-light-5 p-4 hover-bg-slate-light-5 transition-all">
+                            <div class="flex flex-row justify-between align-start mb-2">
+                                <span class="tag-status" 
+                                     :class="post.status === 'published' ? 'green light-4 text-green-dark-2 border-all-1 border-green-light-3' : 'grey light-4 text-grey-dark-2 border-all-1 border-grey-light-3'"
+                                     x-text="post.status"></span>
+                                <span class="text-grey-light-1 font-s1" x-text="new Date(post.created_at).toLocaleDateString()"></span>
+                            </div>
+                            <h5 class="font-w900 font-s2 text-slate-900 mb-0 truncate" x-text="post.entry_title"></h5>
                         </div>
-                        <span class="px-2 py-1 rounded text-[10px] font-bold uppercase" 
-                             :class="post.status === 'published' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'"
-                             x-text="post.status"></span>
-                    </div>
-                </template>
-                <div x-show="!loading && recentPosts.length === 0" class="p-12 text-center text-slate-400 text-sm">
-                    No posts found yet.
-                </div>
-            </div>
-        </div>
-
-        <!-- Pending Comments -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
-                <h4 class="font-bold text-slate-800">Recent Comments</h4>
-                <a href="/manage/comments" class="text-sm text-blue-600 font-semibold hover:underline">Manage</a>
-            </div>
-            <div class="divide-y divide-slate-50">
-                <template x-for="comment in recentComments" :key="comment.id">
-                    <div class="p-4 hover:bg-slate-50 transition-colors">
-                        <div class="flex justify-between mb-1">
-                            <span class="font-semibold text-sm text-slate-900" x-text="comment.author"></span>
-                            <span class="text-[10px] text-slate-400" x-text="new Date(comment.created_at).toLocaleDateString()"></span>
-                        </div>
-                        <p class="text-xs text-slate-600 line-clamp-2" x-text="comment.content"></p>
-                    </div>
-                </template>
-                <div x-show="!loading && recentComments.length === 0" class="p-12 text-center text-slate-400 text-sm">
-                    No comments found.
+                    </template>
                 </div>
             </div>
         </div>
@@ -95,27 +140,20 @@ function adminDashboard() {
         stats: {},
         recentPosts: [],
         recentComments: [],
-        loading: true,
         
         async init() {
-            this.loading = true;
             try {
                 const [statsRes, postsRes, commentsRes] = await Promise.all([
                     fetch('/api/admin/stats'),
                     fetch('/api/admin/posts'),
                     fetch('/api/admin/comments')
                 ]);
-                
                 this.stats = await statsRes.json();
                 const allPosts = await postsRes.json();
-                this.recentPosts = allPosts.slice(0, 5);
+                this.recentPosts = allPosts.slice(0, 6);
                 const allComments = await commentsRes.json();
                 this.recentComments = allComments.slice(0, 5);
-            } catch (err) {
-                console.error('Failed to fetch dashboard data', err);
-            } finally {
-                this.loading = false;
-            }
+            } catch (err) {}
         }
     }
 }

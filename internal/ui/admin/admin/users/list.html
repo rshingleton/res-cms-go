@@ -1,66 +1,107 @@
 {{define "content"}}
-<h1 class="text-2xl font-bold text-gray-800 mb-6">Users</h1>
+<div class="grix xs1 gutter-xs4" style="width: 100%;">
+    <div class="d-flex fx-row fx-space-between vcenter">
+        <h1 class="font-w900 font-s6 text-slate-900 mb-0">User Accounts</h1>
+        <button data-target="add-user-modal" class="btn blue rounded-1 shadow-1 d-flex vcenter modal-trigger font-w800">
+            <i class="fas fa-user-plus mr-2"></i> Add New User
+        </button>
+    </div>
 
-<form method="POST" action="/manage/accounts" class="bg-white rounded-lg shadow p-6 mb-6 space-y-4">
+    <div id="add-user-modal" class="modal white rounded-1 shadow-2 p-5">
+        <div class="modal-header font-w900 font-s4 text-slate-900 mb-4">Add New User</div>
+        <form method="POST" action="/manage/accounts">
+            <div class="form-field form-material mb-4">
+                <input type="text" id="username" name="username" class="form-control font-w600" required />
+                <label for="username">Username</label>
+            </div>
+            <div class="form-field form-material mb-4">
+                <input type="password" id="password" name="password" class="form-control font-w600" required />
+                <label for="password">Password</label>
+            </div>
+            <div class="form-field form-material mb-4">
+                <input type="email" id="email" name="email" class="form-control font-w600" />
+                <label for="email">Email Address</label>
+            </div>
+            <div class="form-field form-material mb-4">
+                <select id="role" name="role" class="form-control font-w700 bg-slate-light-5">
+                    <option value="user">User</option>
+                    <option value="editor">Editor</option>
+                    <option value="admin">Admin</option>
+                </select>
+                <label for="role">System Role</label>
+            </div>
+            <div class="mb-4">
+                <label class="form-check d-flex vcenter">
+                    <input type="checkbox" name="is_admin" />
+                    <span class="ml-3 font-w600 font-s2 text-slate-800">Grant Administrator Access</span>
+                </label>
+            </div>
+            <div class="d-flex fx-row fx-right g-gap-3 mt-5">
+                <button type="button" class="btn white text-grey shadow-0 modal-close font-w700">Cancel</button>
+                <button type="submit" class="btn blue rounded-1 shadow-1 font-w800">Create User</button>
+            </div>
+        </form>
+    </div>
 
-<p class="font-semibold">Add New User</p>
-<div>
-<label for="username" class="block text-gray-700 text-sm font-bold mb-2">Username</label>
-<input type="text" id="username" name="username" required
-class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+    <div class="card white shadow-1 rounded-1 overflow-hidden" style="width: 100%;">
+        {{if .Users}}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th class="font-w800 font-s1 uppercase text-slate-700">User</th>
+                        <th class="font-w800 font-s1 uppercase text-slate-700">Email</th>
+                        <th class="font-w800 font-s1 uppercase text-slate-700 text-center">Role</th>
+                        <th class="font-w800 font-s1 uppercase text-slate-700 text-center">Status</th>
+                        <th class="font-w800 font-s1 uppercase text-slate-700 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Users}}
+                    <tr class="hover-bg-slate-light-5 transition-all">
+                        <td>
+                            <div class="d-flex vcenter">
+                                <div class="circle blue light-4 text-blue-dark-2 d-flex vcenter fx-center font-w900 mr-3" style="width: 32px; height: 32px;">
+                                    {{.Username | printf "%.1s" | toUpper}}
+                                </div>
+                                <span class="font-w800 text-slate-900">{{.Username}}</span>
+                            </div>
+                        </td>
+                        <td><span class="font-w600 font-s1 text-slate-600">{{.Email}}</span></td>
+                        <td class="text-center">
+                            <span class="tag-status {{if eq .Role "admin"}}purple light-4 text-purple-dark-2 border-all-1 border-purple-light-3{{else}}blue light-4 text-blue-dark-2 border-all-1 border-blue-light-3{{end}}">
+                                {{.Role}}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <span class="tag-status {{if eq .Status "activated"}}green light-4 text-green-dark-2 border-all-1 border-green-light-3{{else}}grey light-4 text-grey-dark-2 border-all-1 border-grey-light-3{{end}}">
+                                {{.Status}}
+                            </span>
+                        </td>
+                        <td class="text-right">
+                            <div class="d-flex fx-row fx-right g-gap-2">
+                                <a href="/manage/accounts/edit/{{.ID}}" class="btn btn-small transparent text-blue shadow-0 hover-bg-blue-light-5 rounded-1" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="/manage/accounts/delete/{{.ID}}" class="btn btn-small transparent text-red shadow-0 hover-bg-red-light-5 rounded-1" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{else}}
+        <div class="p-5 text-center text-grey font-w600">No users found.</div>
+        {{end}}
+    </div>
 </div>
-<div>
-<label for="password" class="block text-gray-700 text-sm font-bold mb-2">Password</label>
-<input type="password" id="password" name="password" required
-class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
-</div>
-<div>
-<label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
-<input type="email" id="email" name="email"
-class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
-</div>
-<div>
-<label for="role" class="block text-gray-700 text-sm font-bold mb-2">Role</label>
-<select id="role" name="role" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
-<option value="user">User</option>
-<option value="editor">Editor</option>
-<option value="admin">Admin</option>
-</select>
-</div>
-<div>
-<label>
-<input type="checkbox" name="is_admin"> Is Admin
-</label>
-</div>
-<button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">Add User</button>
-</form>
 
-{{if .Users}}
-<table class="min-w-full bg-white rounded-lg shadow">
-<thead>
-<tr class="bg-gray-50">
-<th class="px-4 py-2 text-left">Username</th>
-<th class="px-4 py-2 text-left">Email</th>
-<th class="px-4 py-2 text-left">Role</th>
-<th class="px-4 py-2 text-left">Status</th>
-<th class="px-4 py-2 text-left">Actions</th>
-</tr>
-</thead>
-<tbody>
-{{range .Users}}
-<tr class="border-t">
-<td class="px-4 py-2">{{.Username}}</td>
-<td class="px-4 py-2">{{.Email}}</td>
-<td class="px-4 py-2">{{.Role}}</td>
-<td class="px-4 py-2">{{.Status}}</td>
-<td class="px-4 py-2">
-<a href="/manage/accounts/edit/{{.ID}}" class="text-blue-600 hover:underline mr-2">Edit</a>
-<a href="/manage/accounts/delete/{{.ID}}" class="text-red-600 hover:underline">Delete</a>
-</td>
-
-</tr>
-{{end}}
-</tbody>
-</table>
-{{end}}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        new Axentix.Modal('#add-user-modal');
+    });
+</script>
 {{end}}

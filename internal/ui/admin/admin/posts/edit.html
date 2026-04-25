@@ -1,23 +1,36 @@
 {{define "content"}}
-<div x-data="postEditor()" x-init="init({{.Entry | js}}, {{.Categories | js}}, {{.Tags | js}})" class="max-w-6xl mx-auto">
-    <div class="flex flex-col lg:flex-row gap-8">
-        <!-- Main Editor -->
-        <div class="flex-1 space-y-6">
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
-                <input type="text" x-model="post.entry_title" @input="updateSlug(); queueSave()"
-                       class="w-full text-3xl font-bold text-slate-900 placeholder-slate-300 border-none focus:ring-0 mb-4 p-0"
-                       placeholder="Enter title here...">
+<div x-data="postEditor()" x-init="init({{.Entry | js}}, {{.Categories | js}}, {{.Tags | js}})" x-cloak>
+    
+    <div class="d-flex fx-row fx-space-between vcenter mb-4">
+        <h1 class="font-w900 font-s6 text-slate-900 mb-0">Edit Article</h1>
+        <div class="d-flex g-gap-2">
+            <a href="/manage/entries" class="btn white text-grey shadow-1 rounded-1 font-w800">Cancel</a>
+            <button @click="submitPost()" :disabled="saving" class="btn blue shadow-1 rounded-1 font-w900">
+                <span x-show="!saving">Save Changes</span>
+                <span x-show="saving">Saving...</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Grid Layout -->
+    <div class="grix xs1 lg3 gutter-xs4">
+        
+        <!-- Editor Left Column (Takes 2/3 space on large screens) -->
+        <div class="col-xs1 col-lg2">
+            <div class="card white shadow-1 rounded-1 p-5 h-100">
+                <div class="form-field form-material mb-3">
+                    <input type="text" x-model="post.entry_title" @input="updateSlug(); queueSave()" class="form-control font-w900 font-s6 text-black no-shadow p-0 h-auto" style="border: none; background: transparent;" placeholder="Enter an engaging title...">
+                </div>
                 
-                <div class="flex items-center text-xs text-slate-400 gap-1 mb-8">
-                    <span>Permalink:</span>
-                    <span class="text-slate-800" x-text="'/entry/' + post.slug"></span>
-                    <button @click="editSlug = !editSlug" class="text-blue-600 hover:underline ml-2">Edit</button>
-                    <input x-show="editSlug" type="text" x-model="post.slug" @input="queueSave()" 
-                           class="ml-2 px-1 rounded border border-slate-200 focus:outline-none">
+                <div class="d-flex vcenter font-s1 text-grey mb-4 bg-slate-light-5 p-2 rounded-1 border-all-1 border-slate-light-4">
+                    <span class="mr-2 text-grey-dark-1 font-w700"><i class="fas fa-link mr-1"></i> Permalink:</span>
+                    <span class="text-blue font-w600" x-text="'/entry/' + post.slug"></span>
+                    <button @click="editSlug = !editSlug" class="btn btn-small transparent text-blue font-w800 ml-auto p-0 no-shadow">EDIT</button>
+                    <input x-show="editSlug" type="text" x-model="post.slug" @input="queueSave()" class="form-control rounded-1 ml-3 px-2 py-1 border-all-1 border-blue-light-3 font-s1" style="width: 250px;">
                 </div>
 
                 <!-- CKEditor 5 Wrapper -->
-                <div class="prose prose-slate max-w-none"
+                <div class="prose w-100"
                      x-init="
                         ClassicEditor
                             .create($refs.editor, {
@@ -34,84 +47,80 @@
                                 console.error(error);
                             });
                      ">
-                    <div x-ref="editor" class="min-h-[500px]"></div>
+                    <div x-ref="editor" style="min-height: 600px;"></div>
                 </div>
             </div>
             
             <script src="https://cdn.ckeditor.com/ckeditor5/35.0.1/classic/ckeditor.js"></script>
             <style>
                 .ck-editor__editable {
-                    min-height: 500px;
+                    min-height: 600px;
                     border: none !important;
                     box-shadow: none !important;
+                    font-family: 'Inter', sans-serif;
                 }
                 .ck.ck-toolbar {
                     border: none !important;
-                    border-bottom: 1px solid #f1f5f9 !important;
+                    border-bottom: 1px solid #e2e8f0 !important;
                     background: transparent !important;
                     padding: 0 0 1rem 0 !important;
                 }
             </style>
         </div>
 
-        <!-- Sidebar -->
-        <aside class="w-full lg:w-80 space-y-6">
-            <!-- Publish Actions -->
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
-                <h4 class="font-bold text-slate-800 text-sm uppercase tracking-wider">Publish</h4>
-                
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-slate-500">Status:</span>
-                        <select x-model="post.status" @change="queueSave()" class="text-slate-900 font-semibold border-none focus:ring-0 p-0 text-right bg-transparent">
-                            <option value="draft">Draft</option>
-                            <option value="published">Published</option>
+        <!-- Toolbox Right Column -->
+        <div class="col-xs1 col-lg1 d-flex fx-col">
+            
+            <div class="card white shadow-1 rounded-1 border-all-1 border-slate-light-4 overflow-hidden">
+                <!-- Publish Actions -->
+                <div class="p-4 bg-slate-light-5 border-bottom-1 border-slate-light-4">
+                    <h4 class="font-w900 font-s2 uppercase text-slate-900 mb-3"><i class="fas fa-paper-plane text-blue mr-2"></i> Publishing</h4>
+                    
+                    <div class="form-field form-material mb-4 mt-2">
+                        <select x-model="post.status" @change="queueSave()" class="form-control font-w700 text-slate-800 bg-white border-all-1 border-slate-light-4 rounded-1 px-3">
+                            <option value="draft">Draft (Hidden)</option>
+                            <option value="published">Published (Live)</option>
                         </select>
                     </div>
                     
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-slate-500">Last saved:</span>
-                        <span class="text-slate-400 italic" x-text="lastSavedText"></span>
-                    </div>
-
-                    <div class="pt-4 flex gap-2">
-                        <button @click="submitPost()" :disabled="saving"
-                                class="flex-1 bg-blue-600 text-white font-bold py-2.5 rounded-xl hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-200 disabled:opacity-50">
-                            <span x-show="!saving">Save Changes</span>
-                            <span x-show="saving">Saving...</span>
-                        </button>
+                    <div class="d-flex fx-space-between vcenter bg-white p-3 rounded-1 border-all-1 border-slate-light-4">
+                        <span class="text-grey font-w700 font-s1 uppercase">Auto-Save:</span>
+                        <span class="text-blue font-w800 font-s1" x-text="lastSavedText"></span>
                     </div>
                 </div>
-            </div>
 
-            <!-- Categories -->
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                <h4 class="font-bold text-slate-800 text-sm uppercase tracking-wider mb-4">Categories</h4>
-                <div class="space-y-2 max-h-48 overflow-y-auto px-1">
-                    <template x-for="cat in categories" :key="cat.id">
-                        <label class="flex items-center gap-3 cursor-pointer group">
-                            <input type="checkbox" :value="cat.id" x-model="selectedCategories" @change="queueSave()"
-                                   class="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500 transition-all">
-                            <span class="text-sm text-slate-600 group-hover:text-slate-900 transition-colors" x-text="cat.name"></span>
-                        </label>
-                    </template>
+                <!-- Categories -->
+                <div class="p-4 border-bottom-1 border-slate-light-4">
+                    <div class="d-flex fx-space-between vcenter mb-3">
+                        <h4 class="font-w900 font-s2 uppercase text-slate-900 mb-0"><i class="fas fa-folder-tree text-orange mr-2"></i> Taxonomy</h4>
+                        <a href="/manage/categories" class="btn btn-small transparent text-blue p-0 font-w800 font-s1">Manage</a>
+                    </div>
+                    <div class="overflow-y-auto pr-1" style="max-height: 250px;">
+                        <template x-for="cat in categories" :key="cat.id">
+                            <label class="form-check d-flex vcenter mb-3 cursor-pointer hover-bg-slate-light-5 p-2 rounded-1 transition-all">
+                                <input type="checkbox" :value="cat.id" x-model="selectedCategories" @change="queueSave()" />
+                                <span class="ml-3 font-s2 font-w600 text-slate-800" x-text="cat.name"></span>
+                            </label>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Tags -->
+                <div class="p-4">
+                    <h4 class="font-w900 font-s2 uppercase text-slate-900 mb-3"><i class="fas fa-tags text-green mr-2"></i> Keywords</h4>
+                    <div class="d-flex fx-wrap g-gap-2">
+                        <template x-for="tag in tags" :key="tag.id">
+                            <button @click="toggleTag(tag.id)" 
+                                    :class="selectedTags.includes(tag.id) ? 'blue text-white shadow-1' : 'white text-grey border-all-1 border-slate-light-4'"
+                                    class="btn btn-small rounded-1 px-3 py-2 font-s1 font-w800 transition-all"
+                                    x-text="tag.name">
+                            </button>
+                        </template>
+                    </div>
                 </div>
             </div>
-
-            <!-- Tags -->
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                <h4 class="font-bold text-slate-800 text-sm uppercase tracking-wider mb-4">Tags</h4>
-                <div class="flex flex-wrap gap-2">
-                    <template x-for="tag in tags" :key="tag.id">
-                        <button @click="toggleTag(tag.id)" 
-                                :class="selectedTags.includes(tag.id) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-500 border-slate-200'"
-                                class="px-3 py-1 text-xs font-medium rounded-full border transition-all hover:border-blue-300"
-                                x-text="tag.name">
-                        </button>
-                    </template>
-                </div>
-            </div>
-        </aside>
+            
+        </div>
     </div>
 </div>
 
@@ -147,7 +156,7 @@ function postEditor() {
         },
 
         get lastSavedText() {
-            if (!this.lastSaved) return 'Never';
+            if (!this.lastSaved) return 'Pending...';
             return this.lastSaved.toLocaleTimeString();
         },
 
@@ -186,7 +195,9 @@ function postEditor() {
                 
                 const data = await res.json();
                 if (res.ok) {
-                    Alpine.store('app').notify('Post saved successfully', 'success');
+                    if (!isAutoSave) {
+                        Alpine.store('app').notify('Post saved successfully', 'success');
+                    }
                     if (this.post.id === 0) {
                         this.post.id = data.id;
                         window.history.pushState({}, '', `/manage/entries/edit/${data.id}`);
@@ -195,7 +206,7 @@ function postEditor() {
                 }
             } catch (err) {
                 console.error(err);
-                Alpine.store('app').notify('Auto-save failed', 'error');
+                Alpine.store('app').notify('Save failed', 'error');
             } finally {
                 this.saving = false;
             }
