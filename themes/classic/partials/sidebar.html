@@ -1,0 +1,37 @@
+<aside class="space-y-8">
+    <!-- Search Box -->
+    <div class="relative group">
+        <input type="text" placeholder="Search..." 
+               class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 pl-10 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-slate-700 shadow-sm text-sm">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+    </div>
+
+    <!-- Categories Card -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+        <h4 class="text-xs font-black text-slate-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+            <span class="w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
+            Categories
+        </h4>
+        <nav class="space-y-1">
+            {{range .Sidebar.Categories}}
+                <a href="/entries/category/{{.Slug}}" class="group flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-slate-50 transition-all">
+                    <span class="text-sm text-slate-600 font-medium group-hover:text-blue-600 transition-colors">{{.Name}}</span>
+                    <svg class="w-3 h-3 text-slate-300 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </a>
+            {{end}}
+        </nav>
+    </div>
+
+    <!-- Tags Card -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+        <h4 class="text-xs font-black text-slate-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+            <span class="w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
+            Tags
+        </h4>
+        <div class="flex flex-wrap gap-2">
+            {{range .Sidebar.Tags}}
+                <a href="/entries/tag/{{.Slug}}" class="px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-bold text-slate-600 hover:bg-white hover:border-blue-200 hover:text-blue-600 hover:shadow-md transition-all">#{{.Name}}</a>
+            {{end}}
+        </div>
+    </div>
+</aside>

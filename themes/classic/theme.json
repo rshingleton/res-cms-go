@@ -1,0 +1,20 @@
+{
+  "name": "Classic",
+  "version": "1.0.0",
+  "author": "ResCMS Team",
+  "description": "The original clean and modern ResCMS look based on Tailwind CSS and Inter.",
+  "config": {
+    "colors": {
+      "primary": "#3b82f6",
+      "secondary": "#64748b",
+      "background": "#f8fafc",
+      "surface": "#ffffff",
+      "text": "#0f172a",
+      "border": "#e2e8f0"
+    },
+    "typography": {
+      "body_font": "'Inter', sans-serif"
+    },
+    "border_width": "1px"
+  }
+}

@@ -1,0 +1,22 @@
+<footer class="footer white shadow-1 mt-auto py-5">
+    <div class="container">
+        <div class="flex flex-column flex-md-row align-center justify-between">
+            <div class="flex flex-column align-center align-md-start">
+                <span class="font-w700 font-s3">{{.BlogName}}</span>
+                <p class="font-s1 text-grey">Journalism & Content Platform</p>
+            </div>
+
+            <nav class="flex my-4 my-md-0">
+                <a class="navbar-link font-w600 mx-3" href="/">Home</a>
+                <a class="navbar-link font-w600 mx-3" href="/manage">Manage</a>
+                <template x-for="cat in $store.app.sidebar.Categories" :key="cat.id">
+                    <a class="navbar-link text-grey mx-3" :href="'/entries/category/' + cat.slug" x-text="cat.name"></a>
+                </template>
+            </nav>
+
+            <div class="text-grey font-s1">
+                &copy; 2026 {{.BlogName}}
+            </div>
+        </div>
+    </div>
+</footer>

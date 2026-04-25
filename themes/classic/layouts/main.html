@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title x-data x-text="$store.app.siteName"></title>
+    
+    <!-- Axentix CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/axentix@2.3.0/dist/axentix.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <style>
+        [x-cloak] { display: none !important; }
+        body { font-family: 'Outfit', sans-serif; }
+    </style>
+</head>
+<body class="layout">
+    {{template "partials/header.html" .}}
+
+    <main class="container py-5">
+        {{block "content" .}}{{end}}
+    </main>
+
+    {{template "partials/footer.html" .}}
+
+    <!-- Axentix JS -->
+    <script src="https://cdn.jsdelivr.net/npm/axentix@2.3.0/dist/axentix.min.js"></script>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('app', {
+                siteName: '{{.BlogName}}',
+                sidebar: {{.Sidebar | js}},
+                notifications: [],
+                notify(message, type = 'info') {
+                    const id = Date.now();
+                    this.notifications.push({ id, message, type });
+                    setTimeout(() => {
+                        this.notifications = this.notifications.filter(n => n.id !== id);
+                    }, 3000);
+                }
+            });
+        });
+        
+        function postsList() {
+            return {
+                posts: [],
+                loading: true,
+                init() {
+                    this.fetchPosts();
+                },
+                async fetchPosts() {
+                    this.loading = true;
+                    try {
+                        const res = await fetch('/api/v1/posts');
+                        const data = await res.json();
+                        this.posts = data.posts || [];
+                    } catch (e) {
+                        console.error(e);
+                    } finally {
+                        this.loading = false;
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>

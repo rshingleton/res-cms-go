@@ -1,0 +1,28 @@
+{{define "content"}}
+<div x-data="postsList()" x-init="init()" x-cloak>
+    <div class="py-5">
+        <h1 class="font-w700 font-s6 mb-5">Latest Stories</h1>
+    </div>
+
+    <div class="g-grid g-gap-5">
+        <template x-for="post in posts" :key="post.id">
+            <div class="g-col-12 g-col-md-6 g-col-lg-4">
+                <div class="card white p-4 shadow-1" @click="window.location.href='/entry/' + post.slug" style="cursor: pointer;">
+                    <div class="card-header px-0 border-none flex justify-between">
+                        <span class="text-blue font-w700 font-s1 uppercase" x-text="post.categories && post.categories.length ? post.categories[0].name : 'GENERAL'"></span>
+                        <span class="text-grey font-s1" x-text="new Date(post.created_at).toLocaleDateString()"></span>
+                    </div>
+                    <div class="card-content px-0">
+                        <h2 class="font-w700 font-s3 mb-3 leading-tight" x-text="post.entry_title"></h2>
+                        <p class="text-grey font-s1" x-text="(post.content || '').replace(/<[^>]*>?/gm, '').substring(0, 120) + '...'"></p>
+                    </div>
+                    <div class="card-footer px-0 border-none flex align-center">
+                        <div class="circle bg-blue-light-4 text-blue flex align-center justify-center mr-2 font-w700" style="width: 32px; height: 32px;" x-text="post.author.username[0]"></div>
+                        <span class="font-w600 font-s1" x-text="post.author.username"></span>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>
+{{end}}

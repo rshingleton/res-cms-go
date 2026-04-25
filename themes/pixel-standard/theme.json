@@ -1,0 +1,22 @@
+{
+  "name": "Pixel Standard",
+  "version": "1.0.0",
+  "author": "ResCMS Architect",
+  "description": "A high-fidelity pixel art theme with chunky borders and 8-bit vibes.",
+  "config": {
+    "colors": {
+      "primary": "#3b82f6",
+      "secondary": "#1e293b",
+      "background": "#0f172a",
+      "surface": "#1e293b",
+      "text": "#f8fafc",
+      "border": "#000000",
+      "accent": "#facc15"
+    },
+    "typography": {
+      "pixel_font": "'Press Start 2P', cursive",
+      "body_font": "'Inter', sans-serif"
+    },
+    "border_width": "4px"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "agents": {
+    "overrides": {
+      "documentation-specialist": {
+        "enabled": false
+      },
+      "perl-specialist": {
+        "enabled": false
+      },
+      "python-specialist": {
+        "enabled": false
+      },
+      "go-specialist": {
+        "enabled": false
+      },
+      "frontend-alpine": {
+        "enabled": false
+      },
+      "codebase_investigator": {
+        "enabled": false
+      }
+    }
+  }
+}

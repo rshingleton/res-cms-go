@@ -1,0 +1,27 @@
+<aside class="space-y-12">
+    <div class="pixel-card">
+        <h3 class="sidebar-title">Categories</h3>
+        <ul class="space-y-4">
+            <template x-for="cat in $store.app.sidebar.Categories" :key="cat.id">
+                <li>
+                    <a :href="'/entries/category/' + cat.slug" class="group flex items-center gap-3 no-underline">
+                        <span class="w-2 h-2 bg-pixel-accent pixel-border transition-transform"></span>
+                        <span class="pixel-font text-[10px] text-slate-300 group-hover:text-pixel-accent" x-text="cat.name"></span>
+                    </a>
+                </li>
+            </template>
+        </ul>
+    </div>
+    
+    <div class="pixel-card">
+        <h3 class="sidebar-title">Recent Posts</h3>
+        <div class="space-y-6">
+            <template x-for="post in $store.app.sidebar.Recent" :key="post.slug">
+                <a :href="'/entry/' + post.slug" class="block group no-underline">
+                    <p class="pixel-font text-[8px] text-slate-500 mb-1" x-text="new Date(post.created_at).toLocaleDateString()"></p>
+                    <p class="text-xs font-bold text-slate-200 group-hover:text-pixel-primary transition-colors" x-text="post.entry_title"></p>
+                </a>
+            </template>
+        </div>
+    </div>
+</aside>

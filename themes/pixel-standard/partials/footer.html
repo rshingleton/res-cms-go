@@ -1,0 +1,25 @@
+<footer class="footer shadow-1 mt-auto">
+    <div class="container flex flex-column flex-md-row align-center justify-between">
+        <div class="flex flex-column align-center align-md-start">
+            <span class="pixel-font font-s2">{{.BlogName}}</span>
+            <p class="font-s1 text-grey text-dark-2">The standard for pixelated content.</p>
+        </div>
+
+        <div class="navbar-menu mx-auto my-3 my-md-0">
+            <a class="navbar-link pixel-font font-s1" href="/">Home</a>
+            <a class="navbar-link pixel-font font-s1" href="/manage">Admin</a>
+            <template x-for="cat in $store.app.sidebar.Categories" :key="cat.id">
+                <a class="navbar-link pixel-font font-s1 text-grey" :href="'/entries/category/' + cat.slug" x-text="cat.name"></a>
+            </template>
+        </div>
+
+        <div class="flex flex-column align-center align-md-end">
+            <span class="pixel-font font-s1 text-grey">&copy; 2026</span>
+            <div class="flex mt-2">
+                <div class="p-1 bg-yellow border-black border-all-1 mr-1"></div>
+                <div class="p-1 bg-blue border-black border-all-1 mr-1"></div>
+                <div class="p-1 bg-red border-black border-all-1"></div>
+            </div>
+        </div>
+    </div>
+</footer>

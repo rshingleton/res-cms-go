@@ -1,0 +1,206 @@
+{{define "content"}}
+<div x-data="postEditor()" x-init="init({{.Entry | js}}, {{.Categories | js}}, {{.Tags | js}})" class="max-w-6xl mx-auto">
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Main Editor -->
+        <div class="flex-1 space-y-6">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+                <input type="text" x-model="post.entry_title" @input="updateSlug(); queueSave()"
+                       class="w-full text-3xl font-bold text-slate-900 placeholder-slate-300 border-none focus:ring-0 mb-4 p-0"
+                       placeholder="Enter title here...">
+                
+                <div class="flex items-center text-xs text-slate-400 gap-1 mb-8">
+                    <span>Permalink:</span>
+                    <span class="text-slate-800" x-text="'/entry/' + post.slug"></span>
+                    <button @click="editSlug = !editSlug" class="text-blue-600 hover:underline ml-2">Edit</button>
+                    <input x-show="editSlug" type="text" x-model="post.slug" @input="queueSave()" 
+                           class="ml-2 px-1 rounded border border-slate-200 focus:outline-none">
+                </div>
+
+                <!-- CKEditor 5 Wrapper -->
+                <div class="prose prose-slate max-w-none"
+                     x-init="
+                        ClassicEditor
+                            .create($refs.editor, {
+                                toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'insertTable', 'undo', 'redo']
+                            })
+                            .then(editor => {
+                                editor.setData(post.content);
+                                editor.model.document.on('change:data', () => {
+                                    post.content = editor.getData();
+                                    queueSave();
+                                });
+                            })
+                            .catch(error => {
+                                console.error(error);
+                            });
+                     ">
+                    <div x-ref="editor" class="min-h-[500px]"></div>
+                </div>
+            </div>
+            
+            <script src="https://cdn.ckeditor.com/ckeditor5/35.0.1/classic/ckeditor.js"></script>
+            <style>
+                .ck-editor__editable {
+                    min-height: 500px;
+                    border: none !important;
+                    box-shadow: none !important;
+                }
+                .ck.ck-toolbar {
+                    border: none !important;
+                    border-bottom: 1px solid #f1f5f9 !important;
+                    background: transparent !important;
+                    padding: 0 0 1rem 0 !important;
+                }
+            </style>
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="w-full lg:w-80 space-y-6">
+            <!-- Publish Actions -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+                <h4 class="font-bold text-slate-800 text-sm uppercase tracking-wider">Publish</h4>
+                
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-slate-500">Status:</span>
+                        <select x-model="post.status" @change="queueSave()" class="text-slate-900 font-semibold border-none focus:ring-0 p-0 text-right bg-transparent">
+                            <option value="draft">Draft</option>
+                            <option value="published">Published</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-slate-500">Last saved:</span>
+                        <span class="text-slate-400 italic" x-text="lastSavedText"></span>
+                    </div>
+
+                    <div class="pt-4 flex gap-2">
+                        <button @click="submitPost()" :disabled="saving"
+                                class="flex-1 bg-blue-600 text-white font-bold py-2.5 rounded-xl hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-200 disabled:opacity-50">
+                            <span x-show="!saving">Save Changes</span>
+                            <span x-show="saving">Saving...</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categories -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                <h4 class="font-bold text-slate-800 text-sm uppercase tracking-wider mb-4">Categories</h4>
+                <div class="space-y-2 max-h-48 overflow-y-auto px-1">
+                    <template x-for="cat in categories" :key="cat.id">
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="checkbox" :value="cat.id" x-model="selectedCategories" @change="queueSave()"
+                                   class="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500 transition-all">
+                            <span class="text-sm text-slate-600 group-hover:text-slate-900 transition-colors" x-text="cat.name"></span>
+                        </label>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Tags -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                <h4 class="font-bold text-slate-800 text-sm uppercase tracking-wider mb-4">Tags</h4>
+                <div class="flex flex-wrap gap-2">
+                    <template x-for="tag in tags" :key="tag.id">
+                        <button @click="toggleTag(tag.id)" 
+                                :class="selectedTags.includes(tag.id) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-500 border-slate-200'"
+                                class="px-3 py-1 text-xs font-medium rounded-full border transition-all hover:border-blue-300"
+                                x-text="tag.name">
+                        </button>
+                    </template>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<script>
+function postEditor() {
+    return {
+        post: { id: 0, entry_title: '', slug: '', content: '', status: 'draft' },
+        categories: [],
+        tags: [],
+        selectedCategories: [],
+        selectedTags: [],
+        editSlug: false,
+        saving: false,
+        lastSaved: null,
+        saveTimeout: null,
+
+        init(entry, allCategories, allTags) {
+            if (entry && entry.id) {
+                this.post = entry;
+                this.selectedCategories = (entry.categories || []).map(c => c.id);
+                this.selectedTags = (entry.tags || []).map(t => t.id);
+            }
+            this.categories = allCategories || [];
+            this.tags = allTags || [];
+        },
+
+        updateSlug() {
+            if (this.post.id === 0 || !this.post.slug) {
+                this.post.slug = this.post.entry_title.toLowerCase()
+                    .replace(/[^\w ]+/g, '')
+                    .replace(/ +/g, '-');
+            }
+        },
+
+        get lastSavedText() {
+            if (!this.lastSaved) return 'Never';
+            return this.lastSaved.toLocaleTimeString();
+        },
+
+        queueSave() {
+            if (this.saveTimeout) clearTimeout(this.saveTimeout);
+            this.saveTimeout = setTimeout(() => this.submitPost(true), 1500);
+        },
+
+        toggleTag(tagId) {
+            if (this.selectedTags.includes(tagId)) {
+                this.selectedTags = this.selectedTags.filter(id => id !== tagId);
+            } else {
+                this.selectedTags.push(tagId);
+            }
+            this.queueSave();
+        },
+
+        async submitPost(isAutoSave = false) {
+            this.saving = true;
+            try {
+                const payload = {
+                    id: this.post.id,
+                    title: this.post.entry_title,
+                    slug: this.post.slug,
+                    content: this.post.content,
+                    status: this.post.status,
+                    categories: this.selectedCategories.map(id => parseInt(id)),
+                    tags: this.selectedTags.map(id => parseInt(id))
+                };
+                
+                const res = await fetch('/api/admin/posts/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await res.json();
+                if (res.ok) {
+                    Alpine.store('app').notify('Post saved successfully', 'success');
+                    if (this.post.id === 0) {
+                        this.post.id = data.id;
+                        window.history.pushState({}, '', `/manage/entries/edit/${data.id}`);
+                    }
+                    this.lastSaved = new Date();
+                }
+            } catch (err) {
+                console.error(err);
+                Alpine.store('app').notify('Auto-save failed', 'error');
+            } finally {
+                this.saving = false;
+            }
+        }
+    }
+}
+</script>
+{{end}}

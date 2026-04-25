@@ -1,0 +1,31 @@
+{{define "content"}}
+<div x-data="postsList()" x-init="init()" x-cloak>
+    <div class="text-center py-5">
+        <h1 class="pixel-text font-s5">Latest Updates</h1>
+    </div>
+
+    <div class="g-grid g-gap-4">
+        <template x-for="post in posts" :key="post.id">
+            <div class="g-col-12 g-col-md-6 g-col-lg-4">
+                <div class="card white p-4" @click="window.location.href='/entry/' + post.slug" style="cursor: pointer; border: 4px solid black;">
+                    <div class="card-header px-0 flex justify-between">
+                        <span class="pixel-text font-s1 text-blue" x-text="post.categories && post.categories.length ? post.categories[0].name.toUpperCase() : 'GENERAL'"></span>
+                        <span class="pixel-text font-s1 text-grey" x-text="new Date(post.created_at).toLocaleDateString()"></span>
+                    </div>
+                    <div class="card-content px-0">
+                        <h2 class="pixel-text font-s2 mb-3" x-text="post.entry_title"></h2>
+                        <p class="font-s1" style="height: 60px; overflow: hidden;" x-text="(post.content || '').replace(/<[^>]*>?/gm, '').substring(0, 100) + '...'"></p>
+                    </div>
+                    <div class="card-footer px-0 flex justify-between align-center">
+                        <div class="flex align-center">
+                            <div class="circle bg-blue white-text flex align-center justify-center mr-2 pixel-text font-s1" style="width: 24px; height: 24px;" x-text="post.author.username[0]"></div>
+                            <span class="pixel-text font-s1" x-text="post.author.username"></span>
+                        </div>
+                        <span class="pixel-text font-s1 text-blue">READ &gt;</span>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>
+{{end}}

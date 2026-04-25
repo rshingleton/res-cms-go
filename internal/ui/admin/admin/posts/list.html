@@ -1,0 +1,71 @@
+{{define "content"}}
+<div class="flex justify-between items-center mb-8">
+    <h1 class="text-2xl font-black text-slate-800">Content Entries</h1>
+    <a href="/manage/entries/new" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-lg shadow-blue-100 flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+        New Article
+    </a>
+</div>
+
+<div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+    {{if .Entries}}
+    <table class="min-w-full divide-y divide-slate-100">
+        <thead class="bg-slate-50/50">
+            <tr>
+                <th class="px-6 py-4 text-left text-xs font-black text-slate-400 uppercase tracking-widest">Article Title</th>
+                <th class="px-6 py-4 text-left text-xs font-black text-slate-400 uppercase tracking-widest">Author</th>
+                <th class="px-6 py-4 text-left text-xs font-black text-slate-400 uppercase tracking-widest">Status</th>
+                <th class="px-6 py-4 text-left text-xs font-black text-slate-400 uppercase tracking-widest">Date</th>
+                <th class="px-6 py-4 text-right text-xs font-black text-slate-400 uppercase tracking-widest">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-50">
+            {{range .Entries}}
+            <tr class="hover:bg-slate-50/50 transition-colors group">
+                <td class="px-6 py-4">
+                    <div class="flex flex-col">
+                        <span class="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{{.EntryTitle}}</span>
+                        <span class="text-[10px] text-slate-400 font-mono">{{.Slug}}</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 uppercase">{{.Author.Username | printf "%.1s"}}</div>
+                        <span class="text-sm font-semibold text-slate-600">{{.Author.Username}}</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider
+                        {{if eq .Status "published"}}bg-emerald-50 text-emerald-600{{else}}bg-slate-100 text-slate-500{{end}}">
+                        {{.Status}}
+                    </span>
+                </td>
+                <td class="px-6 py-4">
+                    <span class="text-xs font-medium text-slate-500">{{.CreatedAt.Format "Jan 02, 2006"}}</span>
+                </td>
+                <td class="px-6 py-4 text-right">
+                    <div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <a href="/manage/entries/edit/{{.ID}}" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Edit">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        </a>
+                        <a href="/manage/entries/delete/{{.ID}}" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Delete">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+    {{else}}
+    <div class="p-20 text-center">
+        <div class="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
+            <svg class="w-10 h-10 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l4 4v10a2 2 0 01-2 2z"></path></svg>
+        </div>
+        <h3 class="text-xl font-bold text-slate-800 mb-2">No articles yet</h3>
+        <p class="text-slate-500 mb-8 max-w-sm mx-auto text-sm">Your stories waiting to be told. Create your first post and share it with the world.</p>
+        <a href="/manage/entries/new" class="inline-flex bg-blue-600 text-white font-bold py-3 px-8 rounded-2xl shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all">Start Writing</a>
+    </div>
+    {{end}}
+</div>
+{{end}}

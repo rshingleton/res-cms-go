@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title x-data x-text="`${$store.app.siteName} | Admin`"></title>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans antialiased" x-data x-cloak>
+    <div class="min-h-screen flex">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col fixed h-full z-10">
+            <div class="h-16 flex items-center px-6 border-b border-slate-100">
+                <a href="/manage" class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">ResCMS</a>
+            </div>
+            
+            <nav class="flex-1 p-4 space-y-1">
+                <a href="/manage" class="flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors hover:bg-slate-100 {{if eq .ActiveTab "dashboard"}}bg-blue-50 text-blue-700{{else}}text-slate-600{{end}}">
+                    Dashboard
+                </a>
+                <a href="/manage/entries" class="flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors hover:bg-slate-100 {{if eq .ActiveTab "posts"}}bg-blue-50 text-blue-700{{else}}text-slate-600{{end}}">
+                    Posts
+                </a>
+                <a href="/manage/categories" class="flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors hover:bg-slate-100 {{if eq .ActiveTab "categories"}}bg-blue-50 text-blue-700{{else}}text-slate-600{{end}}">
+                    Categories
+                </a>
+                <a href="/manage/comments" class="flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors hover:bg-slate-100 {{if eq .ActiveTab "comments"}}bg-blue-50 text-blue-700{{else}}text-slate-600{{end}}">
+                    Comments
+                </a>
+                <a href="/manage/accounts" class="flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors hover:bg-slate-100 {{if eq .ActiveTab "users"}}bg-blue-50 text-blue-700{{else}}text-slate-600{{end}}">
+                    Users
+                </a>
+                <a href="/manage/themes" class="flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors hover:bg-slate-100 {{if eq .ActiveTab "themes"}}bg-blue-50 text-blue-700{{else}}text-slate-600{{end}}">
+                    Themes
+                </a>
+                <a href="/manage/configs" class="flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors hover:bg-slate-100 {{if eq .ActiveTab "settings"}}bg-blue-50 text-blue-700{{else}}text-slate-600{{end}}">
+                    Settings
+                </a>
+            </nav>
+            
+            <div class="p-4 border-t border-slate-100">
+                <div class="flex items-center gap-3 px-2 mb-4">
+                    <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs ring-2 ring-white">
+                        {{if .User}}{{.User.Username | printf "%.1s" | toUpper}}{{else}}A{{end}}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs font-semibold text-slate-900 truncate">{{if .User}}{{.User.Username}}{{else}}Admin{{end}}</p>
+                        <p class="text-[10px] text-slate-500 truncate">Administrator</p>
+                    </div>
+                </div>
+                <a href="/access/logout" class="flex items-center px-4 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                    Log out
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="md:ml-64 flex-1 flex flex-col min-h-screen">
+            <!-- Header -->
+            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-10">
+                <h1 class="text-lg font-semibold text-slate-800 capitalize">{{.ActiveTab}}</h1>
+                <div class="flex items-center gap-4">
+                    <a href="/" target="_blank" class="text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors">View Site</a>
+                </div>
+            </header>
+
+            <!-- Page -->
+            <div class="p-8">
+                <!-- Notifications -->
+                <div x-data="{ show: true }" x-show="show && $store.app.notifications.length" class="mb-6">
+                    <template x-for="note in $store.app.notifications" :key="note.id">
+                        <div class="p-4 rounded-lg border mb-2 flex justify-between items-center" 
+                             :class="note.type === 'error' ? 'bg-red-50 border-red-200 text-red-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'">
+                            <span x-text="note.message"></span>
+                            <button @click="$store.app.notifications = $store.app.notifications.filter(n => n.id !== note.id)" class="text-lg">&times;</button>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Legacy Flash (transition) -->
+                {{with .Flash}}
+                <div class="p-4 rounded-lg bg-blue-50 border border-blue-200 text-blue-800 mb-6 flex justify-between items-center" x-data="{ show: true }" x-show="show">
+                    <span>{{.}}</span>
+                    <button @click="show = false" class="text-lg">&times;</button>
+                </div>
+                {{end}}
+
+                {{block "content" .}}{{end}}
+            </div>
+        </main>
+    </div>
+
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('app', {
+                siteName: '{{.BlogName}}',
+                notifications: [],
+                notify(message, type = 'info') {
+                    const id = Date.now();
+                    this.notifications.push({ id, message, type });
+                    setTimeout(() => {
+                        this.notifications = this.notifications.filter(n => n.id !== id);
+                    }, 3000);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

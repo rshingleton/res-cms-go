@@ -1,0 +1,8 @@
+secrets:
+  - mysecret
+
+listen: :3000
+
+sqlite_dsn: data/rescms.db
+
+production: false

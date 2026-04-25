@@ -1,0 +1,22 @@
+<!-- Alpine.js -->
+<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.store('app', {
+            siteName: 'ResCMS',
+            currentTab: 'home',
+            notifications: [],
+            setTab(tab) {
+                this.currentTab = tab;
+            },
+            notify(message, type = 'info') {
+                const id = Date.now();
+                this.notifications.push({ id, message, type });
+                setTimeout(() => {
+                    this.notifications = this.notifications.filter(n => n.id !== id);
+                }, 3000);
+            }
+        });
+    });
+</script>

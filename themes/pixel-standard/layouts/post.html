@@ -1,0 +1,51 @@
+{{define "content"}}
+<div class="container py-5" x-data="{ entry: {{ .Entry | js }} }">
+    <div class="card pixel-card p-5">
+        <header class="text-center mb-5">
+            <div class="pixel-font font-s1 text-grey mb-3">
+                <span class="bg-black white-text p-1">Entry</span>
+                <span class="mx-2">/</span>
+                <span x-text="new Date(entry.created_at).toLocaleDateString()"></span>
+            </div>
+            <h1 class="pixel-font font-s5 mb-4" x-text="entry.entry_title"></h1>
+            <div class="flex justify-center align-center">
+                <div class="circle bg-blue white-text flex align-center justify-center mr-3 pixel-font font-s2" style="width: 48px; height: 48px;" x-text="entry.author ? entry.author.username[0] : 'A'"></div>
+                <div class="text-left">
+                    <p class="pixel-font font-s1 text-grey mb-0">By</p>
+                    <p class="pixel-font font-s2" x-text="(entry.author ? entry.author.username : 'ADMIN')"></p>
+                </div>
+            </div>
+        </header>
+
+        <div class="divider border-top-2 border-black opacity-10 my-5"></div>
+
+        <div class="content font-s2 leading-loose" x-html="entry.content" style="line-height: 2;">
+        </div>
+
+        <div class="flex flex-wrap mt-5">
+            <template x-for="tag in entry.tags" :key="tag.id">
+                <a :href="'/entries/tag/' + tag.slug" class="btn pixel-btn font-s1 mr-2 mb-2" x-text="'#' + tag.name"></a>
+            </template>
+        </div>
+    </div>
+
+    <!-- Comments -->
+    <div class="card pixel-card mt-5 p-5">
+        <h3 class="pixel-font font-s3 mb-5">Comments</h3>
+        <div class="flex flex-column gap-5">
+            <template x-for="comment in entry.comments" :key="comment.id">
+                <div class="flex align-start border-left-4 border-yellow pl-4 py-2">
+                    <div class="circle bg-grey text-light-4 flex align-center justify-center mr-4 pixel-font font-s2" style="width: 40px; height: 40px; min-width: 40px;" x-text="comment.author[0]"></div>
+                    <div class="flex-1">
+                        <div class="flex justify-between align-center mb-2">
+                            <span class="pixel-font font-s1" x-text="comment.author"></span>
+                            <span class="pixel-font font-s1 text-grey" x-text="new Date(comment.created_at).toLocaleDateString()"></span>
+                        </div>
+                        <p class="font-s1" x-text="comment.content"></p>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+</div>
+{{end}}

@@ -1,0 +1,52 @@
+{{define "content"}}
+<div class="container py-5" x-data="{ entry: {{ .Entry | js }} }">
+    <div class="card classic-card white p-5 md-p-10">
+        <header class="text-center mb-5">
+            <div class="font-w700 text-blue font-s1 uppercase tracking-1 mb-3" x-text="entry.categories && entry.categories.length ? entry.categories[0].name : 'STORY'"></div>
+            <h1 class="font-w700 font-s6 mb-5 leading-tight" x-text="entry.entry_title"></h1>
+            <div class="flex justify-center align-center">
+                <div class="circle bg-blue-light-4 text-blue flex align-center justify-center mr-3 font-w700" style="width: 48px; height: 48px;" x-text="entry.author ? entry.author.username[0] : 'A'"></div>
+                <div class="text-left">
+                    <p class="font-w400 text-grey font-s1 mb-0">Published by</p>
+                    <p class="font-w700 font-s2" x-text="(entry.author ? entry.author.username : 'ADMIN')"></p>
+                </div>
+                <div class="h-8 w-1 bg-grey opacity-20 mx-5"></div>
+                <div class="text-left">
+                    <p class="font-w400 text-grey font-s1 mb-0">Date</p>
+                    <p class="font-w700 font-s2" x-text="new Date(entry.created_at).toLocaleDateString()"></p>
+                </div>
+            </div>
+        </header>
+
+        <div class="divider border-top-1 border-grey opacity-10 my-5"></div>
+
+        <div class="content font-s3 text-dark-1 leading-loose" x-html="entry.content" style="line-height: 2;">
+        </div>
+
+        <div class="flex flex-wrap mt-5 pt-5 border-top-1 border-grey opacity-10">
+            <template x-for="tag in entry.tags" :key="tag.id">
+                <a :href="'/entries/tag/' + tag.slug" class="btn grey-light-4 text-grey-dark-2 classic-btn font-s1 mr-2 mb-2 no-underline" x-text="'#' + tag.name"></a>
+            </template>
+        </div>
+    </div>
+
+    <!-- Discussion -->
+    <div class="card classic-card white mt-5 p-5 md-p-10">
+        <h3 class="font-w700 font-s4 mb-5">Discussion</h3>
+        <div class="flex flex-column gap-5">
+            <template x-for="comment in entry.comments" :key="comment.id">
+                <div class="flex align-start py-4 border-bottom-1 border-grey opacity-10">
+                    <div class="circle bg-slate-light-4 text-slate flex align-center justify-center mr-4 font-w700" style="width: 40px; height: 40px; min-width: 40px;" x-text="comment.author[0]"></div>
+                    <div class="flex-1">
+                        <div class="flex justify-between align-center mb-2">
+                            <span class="font-w700 font-s1" x-text="comment.author"></span>
+                            <span class="text-grey font-s1" x-text="new Date(comment.created_at).toLocaleDateString()"></span>
+                        </div>
+                        <p class="font-s2 text-dark-1" x-text="comment.content"></p>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+</div>
+{{end}}
