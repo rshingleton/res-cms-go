@@ -1,28 +1,57 @@
 {{define "content"}}
 <div x-data="postsList()" x-init="init()" x-cloak>
-    <div class="py-5">
-        <h1 class="font-w700 font-s6 mb-5">Latest Stories</h1>
-    </div>
+    <div class="grix xs1 lg3 gutter-xs5">
 
-    <div class="g-grid g-gap-5">
-        <template x-for="post in posts" :key="post.id">
-            <div class="g-col-12 g-col-md-6 g-col-lg-4">
-                <div class="card white p-4 shadow-1" @click="window.location.href='/entry/' + post.slug" style="cursor: pointer;">
-                    <div class="card-header px-0 border-none flex justify-between">
-                        <span class="text-blue font-w700 font-s1 uppercase" x-text="post.categories && post.categories.length ? post.categories[0].name : 'GENERAL'"></span>
-                        <span class="text-grey font-s1" x-text="new Date(post.created_at).toLocaleDateString()"></span>
-                    </div>
-                    <div class="card-content px-0">
-                        <h2 class="font-w700 font-s3 mb-3 leading-tight" x-text="post.entry_title"></h2>
-                        <p class="text-grey font-s1" x-text="(post.content || '').replace(/<[^>]*>?/gm, '').substring(0, 120) + '...'"></p>
-                    </div>
-                    <div class="card-footer px-0 border-none flex align-center">
-                        <div class="circle bg-blue-light-4 text-blue flex align-center justify-center mr-2 font-w700" style="width: 32px; height: 32px;" x-text="post.author.username[0]"></div>
-                        <span class="font-w600 font-s1" x-text="post.author.username"></span>
-                    </div>
+        <!-- LEFT: System Page Content (2 cols) -->
+        <div class="col-xs1 col-lg2">
+            <article class="card white p-5 shadow-1">
+                <div class="card-header px-0 mb-4" style="border-bottom: 2px solid #eee;">
+                    <h1 class="font-w900 font-s6 text-slate-900">
+                        {{if .SystemPage.Title}}{{.SystemPage.Title}}{{else}}Welcome{{end}}
+                    </h1>
+                </div>
+                <div class="card-content px-0 font-s2" style="line-height: 1.9; color: #444;">
+                    {{if .SystemPage.Content}}
+                        {{.SystemPage.Content | safeHTML}}
+                    {{else}}
+                        <p>Welcome to your new digital home. Start sharing your journey by adding posts and pages!</p>
+                    {{end}}
+                </div>
+            </article>
+        </div>
+
+        <!-- RIGHT: Recent Posts Sidebar (1 col) -->
+        <div class="col-xs1 col-lg1">
+            <div class="card white shadow-2" style="position: sticky; top: 20px;">
+                <div class="card-header px-4 py-3" style="border-bottom: 2px solid #eee; background: #f8f9fa;">
+                    <h3 class="font-w900 font-s3 text-slate-900 mb-0">Recent Posts</h3>
+                </div>
+                <div class="card-content p-0">
+                    <template x-if="loading">
+                        <div class="px-4 py-3 text-center text-blue font-w600">Loading...</div>
+                    </template>
+                    <template x-if="!loading && posts.length === 0">
+                        <div class="px-4 py-3 text-center text-grey font-w600">No posts yet.</div>
+                    </template>
+                    <ul style="list-style: none; padding: 0; margin: 0;">
+                        <template x-for="(post, index) in posts.slice(0, 8)" :key="post.id">
+                            <li :style="index < posts.slice(0,8).length - 1 ? 'border-bottom: 1px solid #f0f0f0;' : ''">
+                                <a :href="'/entry/' + post.slug"
+                                   class="d-block px-4 py-3 hover-bg-slate-light-5 transition-all"
+                                   style="text-decoration: none; color: inherit;">
+                                    <div class="font-w700 font-s2 text-slate-900 mb-1" x-text="post.entry_title" style="line-height: 1.4;"></div>
+                                    <div class="d-flex fx-space-between vcenter mt-1">
+                                        <span class="text-blue font-w600 font-s1 uppercase" x-text="post.pages && post.pages.length ? post.pages[0].title : 'MAIN'"></span>
+                                        <span class="text-grey font-s1" x-text="new Date(post.created_at).toLocaleDateString()"></span>
+                                    </div>
+                                </a>
+                            </li>
+                        </template>
+                    </ul>
                 </div>
             </div>
-        </template>
+        </div>
+
     </div>
 </div>
 {{end}}

@@ -8,9 +8,6 @@
         <div class="navbar-menu mx-auto my-3 my-md-0">
             <a class="navbar-link pixel-font font-s1" href="/">Home</a>
             <a class="navbar-link pixel-font font-s1" href="/manage">Admin</a>
-            <template x-for="cat in $store.app.sidebar.Categories" :key="cat.id">
-                <a class="navbar-link pixel-font font-s1 text-grey" :href="'/entries/category/' + cat.slug" x-text="cat.name"></a>
-            </template>
         </div>
 
         <div class="flex flex-column align-center align-md-end">

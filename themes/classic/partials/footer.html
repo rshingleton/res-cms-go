@@ -9,9 +9,6 @@
             <nav class="flex my-4 my-md-0">
                 <a class="navbar-link font-w600 mx-3" href="/">Home</a>
                 <a class="navbar-link font-w600 mx-3" href="/manage">Manage</a>
-                <template x-for="cat in $store.app.sidebar.Categories" :key="cat.id">
-                    <a class="navbar-link text-grey mx-3" :href="'/entries/category/' + cat.slug" x-text="cat.name"></a>
-                </template>
             </nav>
 
             <div class="text-grey font-s1">

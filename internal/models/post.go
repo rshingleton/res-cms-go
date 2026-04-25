@@ -17,7 +17,7 @@ type Entry struct {
 
 	// Associations
 	Author     User       `gorm:"foreignKey:AccountID" json:"author,omitempty"`
-	Categories []Category `gorm:"many2many:entry_categories;" json:"categories,omitempty"`
+	Pages      []Page     `gorm:"many2many:entry_pages;" json:"pages,omitempty"`
 	Tags       []Tag      `gorm:"many2many:entry_tags;" json:"tags,omitempty"`
 	Comments   []Comment  `gorm:"foreignKey:EntryID" json:"comments,omitempty"`
 }

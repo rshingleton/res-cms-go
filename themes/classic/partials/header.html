@@ -4,8 +4,8 @@
     </a>
     <div class="navbar-menu ml-auto">
         <a class="navbar-link" href="/">Discover</a>
-        <a class="navbar-link" href="/entries/category/news">News</a>
-        <a class="navbar-link" href="/entries/category/general">General</a>
-        <a class="navbar-link blue white-text" href="/manage">Dashboard</a>
+        {{range .Sidebar.Pages}}{{if not .IsSystem}}
+        <a class="navbar-link" href="/page/{{.Slug}}">{{.Title}}</a>
+        {{end}}{{end}}
     </div>
 </nav>

@@ -2,8 +2,8 @@
 <div x-data="{ openUpload: false }" x-cloak class="grix xs1 gutter-xs4" style="width: 100%;">
     <div class="d-flex fx-row fx-space-between vcenter">
         <div>
-            <h1 class="font-w900 font-s6 text-slate-900 mb-0">Appearance</h1>
-            <p class="text-grey font-s1 font-w600 mb-0 mt-1">Active UI: Axentix Framework v2.3.0</p>
+            <h1 class="font-w900 font-s6 text-slate-900 mb-0">Theme Manager</h1>
+            <p class="text-grey font-s1 font-w600 mb-0 mt-1">Manage, Edit, and Duplicate your site themes.</p>
         </div>
         <button @click="openUpload = true" class="btn blue rounded-1 shadow-1 d-flex vcenter font-w800">
             <i class="fas fa-plus-circle mr-2"></i> Deploy Theme
@@ -28,7 +28,7 @@
         </form>
     </div>
 
-    <!-- Theme Grid using grix -->
+    <!-- Theme Grid -->
     <div class="grix xs1 sm2 md3 lg4 gutter-xs3 mt-4">
         <template x-for="theme in {{ .Themes | json }}" :key="theme.Name">
             <div class="card white rounded-1 transition-all overflow-hidden border-all-1 border-slate-light-4 group h-100 d-flex fx-col shadow-1 hover-shadow-3"
@@ -39,20 +39,26 @@
                     <span class="tag-status blue text-white shadow-1" style="position: absolute; top: 0.5rem; left: 0.5rem; z-index: 2;">Primary</span>
                 </template>
 
-                <div class="d-flex vcenter fx-center bg-slate-light-5 overflow-hidden" style="height: 140px; position: relative;">
+                <div class="d-flex vcenter fx-center bg-slate-light-5 overflow-hidden" style="height: 120px; position: relative;">
                     <i class="fas fa-swatchbook text-blue-light-4 opacity-30 font-s8 group-hover:scale-110 transition-transform"></i>
+                    <!-- Actions Overlay -->
+                    <div class="overlay bg-blue-light-4 d-flex vcenter fx-center g-gap-2 opacity-0 group-hover:opacity-100 transition-all" style="position: absolute; inset: 0; background: rgba(37, 99, 235, 0.1); backdrop-filter: blur(2px);">
+                        <a :href="'/manage/themes/edit/' + theme.Name" class="btn btn-small white text-blue shadow-1 font-w900 rounded-1">
+                            <i class="fas fa-code mr-1"></i> EDIT
+                        </a>
+                        <a :href="'/manage/themes/copy/' + theme.Name" class="btn btn-small white text-grey shadow-1 font-w900 rounded-1">
+                            <i class="fas fa-copy mr-1"></i> COPY
+                        </a>
+                    </div>
                 </div>
                 
                 <div class="p-4 border-top-1 border-slate-light-5 d-flex fx-col fx-space-between bg-white" style="flex: 1;">
                     <div class="mb-4">
                         <div class="d-flex fx-row fx-space-between vcenter">
                             <h3 class="font-w900 font-s3 mb-0 text-slate-900 capitalize tracking-tight" x-text="theme.Name"></h3>
-                            <a :href="'/manage/themes/export/' + theme.Name" class="btn btn-small circle white text-grey border-all-1 border-slate-light-4 no-shadow" title="Export">
+                            <a :href="'/manage/themes/export/' + theme.Name" class="btn btn-small circle transparent text-grey no-shadow hover-bg-slate-light-5" title="Export">
                                 <i class="fas fa-download"></i>
                             </a>
-                        </div>
-                        <div class="mt-2">
-                            <span class="tag-status grey light-4 text-grey-dark-2 border-all-1 border-grey-light-3">v1.0.0</span>
                         </div>
                     </div>
                     

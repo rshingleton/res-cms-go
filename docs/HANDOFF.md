@@ -1,33 +1,24 @@
-# ResCMS Go Development Handoff
+# Handoff Document
 
-## Project Status
-ResCMS has been successfully migrated to a modern Go architecture with a modular Theme Engine and a reactive Admin Dashboard. The legacy Perl/Mojolicious code has been completely replaced.
+## Project Overview
+ResCMS Go is a lightweight, page-based CMS built for speed and flexibility. It replaces the legacy Perl implementation with a modern Go backend and a reactive admin interface.
 
-## Key Accomplishments
-- **Modular Theme Engine**: Supports swappable public skins with standardized manifests (`theme.json`).
-- **Clean Architecture**: Admin UI relocated to `internal/ui` to separate system logic from user themes.
-- **API-First Design**: Backend serves JSON to a reactive Alpine.js frontend.
-- **Pixel Art Standard**: High-fidelity pixelated design system implemented and documented.
+## Current Technical Stack
+- **Backend**: Go 1.22+
+- **Database**: SQLite (`data/rescms.db`)
+- **Admin UI**: Alpine.js, Axentix, SortableJS, CKEditor 5 (Posts), Quill (Pages)
+- **Public UI**: Axentix CSS framework
 
-## Essential Commands
-```bash
-# Run the application
-go run cmd/res-cms/main.go
+## Key Operations
+- **Run**: `go run cmd/res-cms/main.go`
+- **Default Port**: `:3009`
+- **Admin URL**: `/manage`
 
-# Run unit tests
-go test ./...
+## Critical Path for Next Dev
+1. **Quill Retrieval**: We are currently experiencing issues where saved content sometimes fails to load into the Quill editor on the Pages edit screen. We've moved to a textarea-based transfer method, but this needs verification.
+2. **Image Resizing**: The image resize module for Quill is integrated via CDN but has activation issues. Ensure `window.Quill` is defined before module load.
+3. **Theme Editor**: The next major feature is an in-browser theme editor for JS and SCSS files.
 
-# Build the binary
-go build -o rescms cmd/res-cms/main.go
-```
-
-## Directory Reference
-- `internal/theme`: Core theme management logic.
-- `internal/ui/admin`: Protected administrative templates.
-- `themes/`: Public theme packages (Classic, Pixel-Standard).
-- `docs/THEME_SPEC.md`: Documentation for creating new themes.
-
-## Immediate Next Steps
-1.  **Expand Tests**: Add integration tests for the Admin API.
-2.  **Asset Pipeline**: Implement automated image optimization for pixel art.
-3.  **Deployment**: Configure Docker builds for production.
+## Database Schema
+The system uses a unified `pages` table for both standalone pages and category-like taxonomies. 
+`SortOrder` in the `pages` table determines the site-wide navigation order.

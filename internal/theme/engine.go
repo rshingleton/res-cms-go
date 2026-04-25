@@ -127,7 +127,15 @@ func (e *Engine) Reload() error {
 
 func (e *Engine) ValidateTheme(path string) error {
 	// Check for required files
-	required := []string{"theme.json", "layouts/index.html", "layouts/post.html"}
+	required := []string{
+		"theme.json",
+		"layouts/main.html",
+		"layouts/index.html",
+		"layouts/post.html",
+		"layouts/page.html",
+		"layouts/login.html",
+		"layouts/profile.html",
+	}
 	for _, f := range required {
 		if _, err := os.Stat(filepath.Join(path, f)); os.IsNotExist(err) {
 			return fmt.Errorf("missing required file: %s", f)

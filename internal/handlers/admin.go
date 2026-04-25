@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"html/template"
 	"log"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"io"
 	"os"
+	"path/filepath"
 )
 
 // AdminIndexHandler displays admin dashboard
@@ -35,7 +37,7 @@ func AdminIndexHandler(w http.ResponseWriter, r *http.Request) {
 	db.DB.Model(&models.Entry{}).Count(&postCount)
 	db.DB.Model(&models.Comment{}).Count(&commentCount)
 	db.DB.Model(&models.User{}).Count(&userCount)
-	db.DB.Model(&models.Category{}).Count(&categoryCount)
+	db.DB.Model(&models.Page{}).Where("is_system = ?", false).Count(&categoryCount)
 
 	// Get recent posts
 	var recentPosts []models.Entry
@@ -107,8 +109,8 @@ func AdminAddPostFormHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var categories []models.Category
-	db.DB.Find(&categories)
+	var categories []models.Page
+	db.DB.Where("is_system = ?", false).Find(&categories)
 
 	var tags []models.Tag
 	db.DB.Find(&tags)
@@ -176,15 +178,15 @@ func AdminAddPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Associate categories
+	// Associate pages (acting as categories)
 	if len(categoryIDs) > 0 {
-		var categories []models.Category
+		var pages []models.Page
 		for _, id := range categoryIDs {
-			if cid, err := strconv.ParseUint(id, 10, 32); err == nil {
-				categories = append(categories, models.Category{ID: uint(cid)})
+			if pid, err := strconv.ParseUint(id, 10, 32); err == nil {
+				pages = append(pages, models.Page{ID: uint(pid)})
 			}
 		}
-		db.DB.Model(&entry).Association("Categories").Append(&categories)
+		db.DB.Model(&entry).Association("Pages").Append(&pages)
 	}
 
 	// Associate tags
@@ -218,13 +220,13 @@ func AdminEditPostFormHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var entry models.Entry
-	if err := db.DB.Preload("Categories").Preload("Tags").First(&entry, id).Error; err != nil {
+	if err := db.DB.Preload("Pages").Preload("Tags").First(&entry, id).Error; err != nil {
 		http.NotFound(w, r)
 		return
 	}
 
-	var categories []models.Category
-	db.DB.Find(&categories)
+	var categories []models.Page
+	db.DB.Where("is_system = ?", false).Find(&categories)
 
 	var tags []models.Tag
 	db.DB.Find(&tags)
@@ -290,14 +292,14 @@ func AdminUpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 	var entry models.Entry
 	db.DB.First(&entry, id)
 	if len(categoryIDs) > 0 {
-		db.DB.Model(&entry).Association("Categories").Clear()
-		var categories []models.Category
+		db.DB.Model(&entry).Association("Pages").Clear()
+		var categories []models.Page
 		for _, id := range categoryIDs {
 			if cid, err := strconv.ParseUint(id, 10, 32); err == nil {
-				categories = append(categories, models.Category{ID: uint(cid)})
+				categories = append(categories, models.Page{ID: uint(cid)})
 			}
 		}
-		db.DB.Model(&entry).Association("Categories").Append(&categories)
+		db.DB.Model(&entry).Association("Pages").Append(&categories)
 	}
 
 	// Update tags
@@ -373,28 +375,23 @@ func AdminDraftPostHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/manage/entries", http.StatusFound)
 }
 
-// ==================== CATEGORIES ====================
+// ==================== PAGES / TAXONOMY ====================
 
-// AdminListCategoriesHandler lists all categories
+// AdminListCategoriesHandler lists all pages (taxonomy)
 func AdminListCategoriesHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/manage/categories" {
-		http.NotFound(w, r)
-		return
-	}
-
 	user := middleware.RequireUser(r)
 	if user == nil {
 		http.Redirect(w, r, "/access/login", http.StatusFound)
 		return
 	}
 
-	var categories []models.Category
-	db.DB.Preload("Parent").Order("name").Find(&categories)
+	var pages []models.Page
+	db.DB.Order("is_system DESC, title ASC").Find(&pages)
 
 	data := map[string]interface{}{
 		"BlogName":   getBlogName(),
 		"User":       user,
-		"Categories": categories,
+		"Categories": pages,
 		"ActiveTab":  "categories",
 	}
 
@@ -404,13 +401,8 @@ func AdminListCategoriesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// AdminAddCategoryHandler creates a new category
+// AdminAddCategoryHandler creates a new page
 func AdminAddCategoryHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/manage/categories" || r.Method != http.MethodPost {
-		http.NotFound(w, r)
-		return
-	}
-
 	user := middleware.RequireUser(r)
 	if user == nil {
 		http.Redirect(w, r, "/access/login", http.StatusFound)
@@ -423,43 +415,40 @@ func AdminAddCategoryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	name := r.PostForm.Get("name")
+	title := r.PostForm.Get("name")
 	slug := r.PostForm.Get("slug")
-	parentIDStr := r.PostForm.Get("parent_id")
 
-	if name == "" || slug == "" {
-		middleware.GenerateFlashCookie(w, "Name and slug are required")
+	if title == "" || slug == "" {
+		middleware.GenerateFlashCookie(w, "Title and slug are required")
 		http.Redirect(w, r, "/manage/categories", http.StatusFound)
 		return
 	}
 
-	category := models.Category{
-		Name: name,
-		Slug: slug,
+	page := models.Page{
+		Title:    title,
+		Slug:     slug,
+		IsSystem: false,
 	}
 
-	if parentIDStr != "" {
-		if pid, err := strconv.ParseUint(parentIDStr, 10, 32); err == nil {
-			category.ParentID = new(uint)
-			*category.ParentID = uint(pid)
-		}
-	}
-
-	if err := db.DB.Create(&category).Error; err != nil {
-		log.Printf("Error creating category: %v", err)
-		middleware.GenerateFlashCookie(w, "Failed to create category")
+	if err := db.DB.Create(&page).Error; err != nil {
+		log.Printf("Error creating page: %v", err)
+		middleware.GenerateFlashCookie(w, "Failed to create page")
 	} else {
-		middleware.GenerateFlashCookie(w, "Category created successfully")
+		middleware.GenerateFlashCookie(w, "Page '"+title+"' created successfully")
 	}
 
 	http.Redirect(w, r, "/manage/categories", http.StatusFound)
 }
 
-// AdminEditCategoryFormHandler shows edit category form
+// AdminEditCategoryFormHandler shows edit page form
 func AdminEditCategoryFormHandler(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "/manage/categories/edit/")
+	idStr := r.PathValue("id")
+	if idStr == "" {
+		idStr = strings.TrimPrefix(r.URL.Path, "/manage/categories/edit/")
+	}
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
+		log.Printf("Error parsing page ID '%s': %v", idStr, err)
 		http.NotFound(w, r)
 		return
 	}
@@ -470,21 +459,20 @@ func AdminEditCategoryFormHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var category models.Category
-	if err := db.DB.Preload("Parent").First(&category, id).Error; err != nil {
+	var page models.Page
+	if err := db.DB.First(&page, id).Error; err != nil {
+		log.Printf("Page with ID %d not found", id)
 		http.NotFound(w, r)
 		return
 	}
 
-	var categories []models.Category
-	db.DB.Where("id != ?", id).Find(&categories)
+	log.Printf("Editing page ID %d: '%s' (Content length: %d)", id, page.Title, len(page.Content))
 
 	data := map[string]interface{}{
-		"BlogName":   getBlogName(),
-		"User":       user,
-		"Category":   category,
-		"Categories": categories,
-		"ActiveTab":  "categories",
+		"BlogName":  getBlogName(),
+		"User":      user,
+		"Category":  page,
+		"ActiveTab": "categories",
 	}
 
 	if err := renderTemplate(w, r, "admin/categories/edit.html", data); err != nil {
@@ -493,11 +481,15 @@ func AdminEditCategoryFormHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// AdminUpdateCategoryHandler updates a category
+// AdminUpdateCategoryHandler updates a page
 func AdminUpdateCategoryHandler(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "/manage/categories/update/")
+	idStr := r.PathValue("id")
+	if idStr == "" {
+		idStr = strings.TrimPrefix(r.URL.Path, "/manage/categories/update/")
+	}
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
+		log.Printf("Error parsing update ID '%s': %v", idStr, err)
 		http.NotFound(w, r)
 		return
 	}
@@ -513,34 +505,29 @@ func AdminUpdateCategoryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	name := r.PostForm.Get("name")
+	title := r.PostForm.Get("name")
 	slug := r.PostForm.Get("slug")
-	parentIDStr := r.PostForm.Get("parent_id")
+	content := r.PostForm.Get("content")
+
+	log.Printf("Updating page ID %d: title='%s', slug='%s', content_len=%d", id, title, slug, len(content))
 
 	updates := map[string]interface{}{
-		"name": name,
-		"slug": slug,
+		"title":   title,
+		"slug":    slug,
+		"content": content,
 	}
 
-	if parentIDStr != "" {
-		if pid, err := strconv.ParseUint(parentIDStr, 10, 32); err == nil {
-			updates["parent_id"] = pid
-		}
+	if err := db.DB.Model(&models.Page{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+		log.Printf("Error updating page %d: %v", id, err)
+		middleware.GenerateFlashCookie(w, "Failed to update page")
 	} else {
-		updates["parent_id"] = nil
-	}
-
-	if err := db.DB.Model(&models.Category{}).Where("id = ?", id).Updates(updates).Error; err != nil {
-		log.Printf("Error updating category: %v", err)
-		middleware.GenerateFlashCookie(w, "Failed to update category")
-	} else {
-		middleware.GenerateFlashCookie(w, "Category updated successfully")
+		middleware.GenerateFlashCookie(w, "Page updated successfully")
 	}
 
 	http.Redirect(w, r, "/manage/categories", http.StatusFound)
 }
 
-// AdminDeleteCategoryHandler deletes a category
+// AdminDeleteCategoryHandler deletes a page
 func AdminDeleteCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/manage/categories/delete/")
 	id, err := strconv.ParseUint(idStr, 10, 32)
@@ -549,11 +536,19 @@ func AdminDeleteCategoryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := db.DB.Delete(&models.Category{}, id).Error; err != nil {
-		log.Printf("Error deleting category: %v", err)
-		middleware.GenerateFlashCookie(w, "Failed to delete category")
+	// Prevent deletion of system pages
+	var page models.Page
+	if err := db.DB.First(&page, id).Error; err == nil && page.IsSystem {
+		middleware.GenerateFlashCookie(w, "Cannot delete system pages")
+		http.Redirect(w, r, "/manage/categories", http.StatusFound)
+		return
+	}
+
+	if err := db.DB.Delete(&models.Page{}, id).Error; err != nil {
+		log.Printf("Error deleting page: %v", err)
+		middleware.GenerateFlashCookie(w, "Failed to delete page")
 	} else {
-		middleware.GenerateFlashCookie(w, "Category deleted successfully")
+		middleware.GenerateFlashCookie(w, "Page deleted successfully")
 	}
 
 	http.Redirect(w, r, "/manage/categories", http.StatusFound)
@@ -1050,22 +1045,190 @@ func AdminActivateThemeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// In a real app, save to DB. For now, just reload in memory.
 	err := ThemeEngine.LoadTheme(themeName, template.FuncMap{
 		"formatDate": func(t interface{}) string { return "2024-01-01" },
 		"json": func(v interface{}) string {
-			return "{}" // Placeholder or use a central helper
+			b, _ := json.Marshal(v)
+			return string(b)
 		},
 		"js": func(v interface{}) template.JS {
-			return template.JS("{}")
+			b, _ := json.Marshal(v)
+			return template.JS(b)
 		},
-		"toUpper": func(s string) string { return strings.ToUpper(s) },
+		"toUpper":  func(s string) string { return strings.ToUpper(s) },
+		"safeHTML": func(s string) template.HTML { return template.HTML(s) },
+		"hasSuffix": func(s, suffix string) bool { return strings.HasSuffix(s, suffix) },
 	})
+
+	if err == nil {
+		// Upsert the active_theme setting
+		setting := models.SiteSetting{Name: "active_theme", Value: themeName}
+		db.DB.Where(models.SiteSetting{Name: "active_theme"}).FirstOrCreate(&setting)
+		db.DB.Model(&setting).Update("value", themeName)
+	}
 
 	if err != nil {
 		middleware.GenerateFlashCookie(w, "Failed to activate theme: "+err.Error())
 	} else {
 		middleware.GenerateFlashCookie(w, "Theme "+themeName+" activated")
+	}
+
+	http.Redirect(w, r, "/manage/themes", http.StatusFound)
+}
+
+// AdminThemeEditorHandler shows the theme file editor
+func AdminThemeEditorHandler(w http.ResponseWriter, r *http.Request) {
+	themeName := r.PathValue("theme")
+	if themeName == "" {
+		themeName = strings.TrimPrefix(r.URL.Path, "/manage/themes/edit/")
+	}
+	if themeName == "" {
+		http.NotFound(w, r)
+		return
+	}
+
+	user := middleware.RequireUser(r)
+	if user == nil {
+		http.Redirect(w, r, "/access/login", http.StatusFound)
+		return
+	}
+
+	themePath := filepath.Join("themes", themeName)
+	if _, err := os.Stat(themePath); os.IsNotExist(err) {
+		http.NotFound(w, r)
+		return
+	}
+
+	// List files recursively
+	var files []string
+	filepath.Walk(themePath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			rel, _ := filepath.Rel(themePath, path)
+			ext := strings.ToLower(filepath.Ext(rel))
+			if ext == ".html" || ext == ".js" || ext == ".css" || ext == ".json" || ext == ".scss" {
+				files = append(files, rel)
+			}
+		}
+		return nil
+	})
+
+	selectedFile := r.URL.Query().Get("file")
+	if selectedFile == "" && len(files) > 0 {
+		for _, f := range files {
+			if f == "theme.json" {
+				selectedFile = f
+				break
+			}
+		}
+		if selectedFile == "" {
+			selectedFile = files[0]
+		}
+	}
+
+	content := ""
+	if selectedFile != "" {
+		fullPath := filepath.Join(themePath, selectedFile)
+		b, err := os.ReadFile(fullPath)
+		if err == nil {
+			content = string(b)
+		}
+	}
+
+	data := map[string]interface{}{
+		"BlogName":     getBlogName(),
+		"User":         user,
+		"ThemeName":    themeName,
+		"Files":        files,
+		"SelectedFile": selectedFile,
+		"FileContent":  content,
+		"ActiveTab":    "themes",
+	}
+
+	if err := renderTemplate(w, r, "admin/themes/editor.html", data); err != nil {
+		log.Printf("Error rendering template: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
+}
+
+// AdminThemeSaveFileHandler saves a file in the theme
+func AdminThemeSaveFileHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	themeName := r.FormValue("theme")
+	fileName := r.FormValue("file")
+	content := r.FormValue("content")
+
+	if themeName == "" || fileName == "" {
+		http.Error(w, "Missing theme or file name", http.StatusBadRequest)
+		return
+	}
+
+	fullPath := filepath.Join("themes", themeName, fileName)
+	cleanPath := filepath.Clean(fullPath)
+	if !strings.HasPrefix(cleanPath, filepath.Join("themes", themeName)) {
+		http.Error(w, "Invalid file path", http.StatusForbidden)
+		return
+	}
+
+	if err := os.WriteFile(cleanPath, []byte(content), 0644); err != nil {
+		log.Printf("Write error: %v", err)
+		http.Error(w, "Failed to save file", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+}
+
+// AdminThemeCopyHandler duplicates a theme
+func AdminThemeCopyHandler(w http.ResponseWriter, r *http.Request) {
+	themeName := r.PathValue("theme")
+	if themeName == "" {
+		themeName = strings.TrimPrefix(r.URL.Path, "/manage/themes/copy/")
+	}
+	if themeName == "" {
+		http.NotFound(w, r)
+		return
+	}
+
+	src := filepath.Join("themes", themeName)
+	base := themeName + "-copy"
+	dst := filepath.Join("themes", base)
+
+	for i := 1; ; i++ {
+		if _, err := os.Stat(dst); os.IsNotExist(err) {
+			break
+		}
+		dst = filepath.Join("themes", base+"-"+strconv.Itoa(i))
+	}
+
+	err := filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		rel, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+		newPath := filepath.Join(dst, rel)
+		if info.IsDir() {
+			return os.MkdirAll(newPath, info.Mode())
+		}
+		input, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		return os.WriteFile(newPath, input, info.Mode())
+	})
+
+	if err != nil {
+		log.Printf("Copy error: %v", err)
+		middleware.GenerateFlashCookie(w, "Failed to copy theme")
+	} else {
+		middleware.GenerateFlashCookie(w, "Theme copied to "+filepath.Base(dst))
 	}
 
 	http.Redirect(w, r, "/manage/themes", http.StatusFound)

@@ -1,42 +1,89 @@
 {{define "content"}}
-<h1 class="text-2xl font-bold text-gray-800 mb-6">Edit User</h1>
+<div class="grix xs1 gutter-xs4" style="width: 100%;">
+    <div class="d-flex fx-row fx-space-between vcenter mb-2">
+        <div>
+            <h1 class="font-w900 font-s6 text-slate-900 mb-1">Edit User</h1>
+            <p class="text-grey font-s2 mb-0">Update account credentials and permissions.</p>
+        </div>
+        <a href="/manage/accounts" class="btn white text-slate-700 shadow-1 rounded-1 font-w700 d-flex vcenter">
+            <i class="fas fa-arrow-left mr-2"></i> Back to Accounts
+        </a>
+    </div>
 
-<form method="POST" action="/manage/accounts/update/{{.EditUser.ID}}" class="bg-white rounded-lg shadow p-6 space-y-4">
+    <form method="POST" action="/manage/accounts/update/{{.EditUser.ID}}">
+        <div class="grix xs1 lg3 gutter-xs4">
 
-<div>
-<label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
-<input type="email" id="email" name="email" value="{{.EditUser.Email}}"
-class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
-</div>
-<div>
-<label for="password" class="block text-gray-700 text-sm font-bold mb-2">New Password (leave blank to keep current)</label>
-<input type="password" id="password" name="password"
-class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
-</div>
-<div>
-<label for="role" class="block text-gray-700 text-sm font-bold mb-2">Role</label>
-<select id="role" name="role" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
-<option value="user" {{if eq .EditUser.Role "user"}}selected{{end}}>User</option>
-<option value="editor" {{if eq .EditUser.Role "editor"}}selected{{end}}>Editor</option>
-<option value="admin" {{if eq .EditUser.Role "admin"}}selected{{end}}>Admin</option>
-</select>
-</div>
-<div>
-<label for="status" class="block text-gray-700 text-sm font-bold mb-2">Status</label>
-<select id="status" name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
-<option value="activated" {{if eq .EditUser.Status "activated"}}selected{{end}}>Activated</option>
-<option value="suspended" {{if eq .EditUser.Status "suspended"}}selected{{end}}>Suspended</option>
-</select>
-</div>
-<div>
-<label>
-<input type="checkbox" name="is_admin" {{if .EditUser.IsAdmin}}checked{{end}}> Is Admin
-</label>
-</div>
-<div class="flex gap-4">
-<button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700">Update</button>
-<a href="/manage/accounts" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</a>
+            <!-- Main fields (2 cols) -->
+            <div class="col-xs1 col-lg2">
+                <div class="card white shadow-1 rounded-1 p-4">
+                    <h3 class="font-w800 font-s3 text-slate-900 mb-4 pb-3" style="border-bottom: 2px solid var(--color-slate-light-3);">
+                        Account Details
+                    </h3>
 
+                    <div class="form-field form-material mb-4">
+                        <input type="text" id="edit-username" name="username" value="{{.EditUser.Username}}"
+                               class="form-control font-w600" />
+                        <label for="edit-username">Username</label>
+                    </div>
+
+                    <div class="form-field form-material mb-4">
+                        <input type="email" id="edit-email" name="email" value="{{.EditUser.Email}}"
+                               class="form-control font-w600" />
+                        <label for="edit-email">Email Address</label>
+                    </div>
+
+                    <div class="form-field form-material mb-4">
+                        <input type="password" id="edit-password" name="password"
+                               class="form-control font-w600" placeholder=" " />
+                        <label for="edit-password">New Password (leave blank to keep)</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Permissions sidebar (1 col) -->
+            <div class="col-xs1 col-lg1">
+                <div class="card white shadow-1 rounded-1 p-4">
+                    <h3 class="font-w800 font-s3 text-slate-900 mb-4 pb-3" style="border-bottom: 2px solid var(--color-slate-light-3);">
+                        Permissions
+                    </h3>
+
+                    <div class="form-field mb-4">
+                        <label class="font-w700 font-s2 text-slate-700 mb-2 d-block">Role</label>
+                        <select id="edit-role" name="role" class="form-control font-w600 rounded-1">
+                            <option value="user"   {{if eq .EditUser.Role "user"}}selected{{end}}>User</option>
+                            <option value="editor" {{if eq .EditUser.Role "editor"}}selected{{end}}>Editor</option>
+                            <option value="admin"  {{if eq .EditUser.Role "admin"}}selected{{end}}>Admin</option>
+                        </select>
+                    </div>
+
+                    <div class="form-field mb-4">
+                        <label class="font-w700 font-s2 text-slate-700 mb-2 d-block">Status</label>
+                        <select id="edit-status" name="status" class="form-control font-w600 rounded-1">
+                            <option value="activated"  {{if eq .EditUser.Status "activated"}}selected{{end}}>Active</option>
+                            <option value="suspended"  {{if eq .EditUser.Status "suspended"}}selected{{end}}>Suspended</option>
+                        </select>
+                    </div>
+
+                    <div class="d-flex vcenter mb-5 p-3 rounded-1 {{if .EditUser.IsAdmin}}blue-light-4{{else}}slate-light-5{{end}}">
+                        <label class="form-check d-flex vcenter cursor-pointer mb-0">
+                            <input type="checkbox" name="is_admin" {{if .EditUser.IsAdmin}}checked{{end}} class="mr-3" />
+                            <div>
+                                <span class="font-w800 font-s2 text-slate-900 d-block">Administrator</span>
+                                <span class="font-s1 text-grey">Full system access</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn blue rounded-1 shadow-1 font-w800 d-block" style="width: 100%;">
+                        <i class="fas fa-save mr-2"></i> Save Changes
+                    </button>
+                    <a href="/manage/accounts" class="btn white text-grey rounded-1 shadow-0 font-w700 d-block mt-2" style="width: 100%; text-align: center;">
+                        Cancel
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </form>
 </div>
-</form>
 {{end}}

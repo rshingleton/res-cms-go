@@ -2,13 +2,18 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"res-cms-go/internal/db"
 	"res-cms-go/internal/middleware"
 	"res-cms-go/internal/models"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // JSONResponse is a helper for sending JSON
@@ -56,7 +61,7 @@ func APIListPostsHandler(w http.ResponseWriter, r *http.Request) {
 	query.Count(&total)
 
 	var entries []models.Entry
-	query.Preload("Author").Preload("Categories").Preload("Tags").
+	query.Preload("Author").Preload("Pages").Preload("Tags").
 		Order("created_at DESC").
 		Offset(offset).Limit(perPage).
 		Find(&entries)
@@ -79,7 +84,7 @@ func APIGetPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var entry models.Entry
-	if err := db.DB.Preload("Author").Preload("Categories").Preload("Tags").
+	if err := db.DB.Preload("Author").Preload("Pages").Preload("Tags").
 		Preload("Comments", "status = ?", "approved").
 		Where("slug = ? AND status = ?", slug, "published").
 		First(&entry).Error; err != nil {
@@ -213,7 +218,7 @@ func APIGetSessionHandler(w http.ResponseWriter, r *http.Request) {
 // APIAdminListPostsHandler returns all posts (including drafts)
 func APIAdminListPostsHandler(w http.ResponseWriter, r *http.Request) {
 	var entries []models.Entry
-	db.DB.Preload("Author").Preload("Categories").Preload("Tags").Order("created_at DESC").Find(&entries)
+	db.DB.Preload("Author").Preload("Pages").Preload("Tags").Order("created_at DESC").Find(&entries)
 	JSONResponse(w, http.StatusOK, entries)
 }
 
@@ -273,13 +278,13 @@ func APIAdminSavePostHandler(w http.ResponseWriter, r *http.Request) {
 	var entry models.Entry
 	db.DB.First(&entry, input.ID)
 	
-	db.DB.Model(&entry).Association("Categories").Clear()
+	db.DB.Model(&entry).Association("Pages").Clear()
 	if len(input.Categories) > 0 {
-		var cats []models.Category
-		for _, cid := range input.Categories {
-			cats = append(cats, models.Category{ID: cid})
+		var pages []models.Page
+		for _, pid := range input.Categories {
+			pages = append(pages, models.Page{ID: pid})
 		}
-		db.DB.Model(&entry).Association("Categories").Append(&cats)
+		db.DB.Model(&entry).Association("Pages").Append(&pages)
 	}
 
 	db.DB.Model(&entry).Association("Tags").Clear()
@@ -325,16 +330,98 @@ func APIAdminUpdateCommentStatusHandler(w http.ResponseWriter, r *http.Request) 
 
 // APIAdminListStatsHandler returns dashboard stats
 func APIAdminListStatsHandler(w http.ResponseWriter, r *http.Request) {
-	var postCount, commentCount, userCount, categoryCount int64
+	var postCount, commentCount, userCount, pageCount int64
 	db.DB.Model(&models.Entry{}).Count(&postCount)
 	db.DB.Model(&models.Comment{}).Count(&commentCount)
 	db.DB.Model(&models.User{}).Count(&userCount)
-	db.DB.Model(&models.Category{}).Count(&categoryCount)
+	db.DB.Model(&models.Page{}).Count(&pageCount)
 
 	JSONResponse(w, http.StatusOK, map[string]interface{}{
-		"posts":      postCount,
-		"comments":   commentCount,
-		"users":      userCount,
-		"categories": categoryCount,
+		"posts":    postCount,
+		"comments": commentCount,
+		"users":    userCount,
+		"pages":    pageCount,
 	})
+}
+
+// APIAdminReorderPagesHandler saves drag-drop sort order for pages
+func APIAdminReorderPagesHandler(w http.ResponseWriter, r *http.Request) {
+	user := middleware.RequireUser(r)
+	if user == nil || !user.IsAdmin {
+		JSONResponse(w, http.StatusForbidden, map[string]string{"error": "forbidden"})
+		return
+	}
+
+	var order []struct {
+		ID        uint `json:"id"`
+		SortOrder int  `json:"sort_order"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&order); err != nil {
+		JSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid body"})
+		return
+	}
+
+	for _, item := range order {
+		db.DB.Model(&models.Page{}).Where("id = ?", item.ID).Update("sort_order", item.SortOrder)
+	}
+
+	JSONResponse(w, http.StatusOK, map[string]string{"message": "order saved"})
+}
+
+// APIUploadImageHandler handles image uploads from the rich text editor
+func APIUploadImageHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		JSONResponse(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+		return
+	}
+
+	user := middleware.RequireUser(r)
+	if user == nil {
+		JSONResponse(w, http.StatusForbidden, map[string]string{"error": "forbidden"})
+		return
+	}
+
+	// Max 10MB
+	r.ParseMultipartForm(10 << 20)
+	file, header, err := r.FormFile("upload")
+	if err != nil {
+		JSONResponse(w, http.StatusBadRequest, map[string]string{"error": "no file uploaded"})
+		return
+	}
+	defer file.Close()
+
+	// Validate extension
+	ext := strings.ToLower(filepath.Ext(header.Filename))
+	allowed := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".gif": true, ".webp": true}
+	if !allowed[ext] {
+		JSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid file type"})
+		return
+	}
+
+	// Ensure uploads dir exists
+	uploadsDir := "public/uploads"
+	if err := os.MkdirAll(uploadsDir, 0755); err != nil {
+		JSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to create uploads dir"})
+		return
+	}
+
+	// Generate unique filename
+	filename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
+	destPath := filepath.Join(uploadsDir, filename)
+
+	dest, err := os.Create(destPath)
+	if err != nil {
+		JSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to save file"})
+		return
+	}
+	defer dest.Close()
+
+	if _, err := io.Copy(dest, file); err != nil {
+		JSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to write file"})
+		return
+	}
+
+	url := "/static/uploads/" + filename
+	// CKEditor 5 expects: { "url": "..." }
+	JSONResponse(w, http.StatusOK, map[string]string{"url": url})
 }

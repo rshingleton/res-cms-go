@@ -72,6 +72,23 @@ func Init(dsn string, production bool) error {
 	}
 
 	log.Println("Database initialized successfully")
+
+	// Seed system Home page if not exists
+	var pageCount int64
+	DB.Model(&models.Page{}).Where("is_system = ?", true).Count(&pageCount)
+	if pageCount == 0 {
+		homePage := models.Page{
+			Title:    "Welcome to ResCMS",
+			Slug:     "home",
+			IsSystem: true,
+		}
+		if err := DB.Create(&homePage).Error; err != nil {
+			log.Printf("Warning: failed to create home page: %v", err)
+		} else {
+			log.Println("Created system Home page")
+		}
+	}
+
 	return nil
 }
 
@@ -93,7 +110,7 @@ func migrate() error {
 	return DB.AutoMigrate(
 		&models.User{},
 		&models.Entry{},
-		&models.Category{},
+		&models.Page{},
 		&models.Tag{},
 		&models.Comment{},
 		&models.SiteSetting{},
@@ -121,19 +138,14 @@ func seed() error {
 		log.Println("Created default admin user")
 	}
 
-	// Seed default settings if not exists
-	DB.Model(&models.SiteSetting{}).Count(&count)
-	if count == 0 {
-		settings := []models.SiteSetting{
-			{Name: "blog_name", Value: "ResCMS"},
-			{Name: "layout_style", Value: "default"},
-		}
-		for _, s := range settings {
-			if err := DB.Create(&s).Error; err != nil {
-				return fmt.Errorf("failed to create setting %s: %w", s.Name, err)
-			}
-		}
-		log.Println("Created default settings")
+	// Seed individual settings using FirstOrCreate so they are added to existing DBs
+	defaultSettings := []models.SiteSetting{
+		{Name: "blog_name", Value: "ResCMS"},
+		{Name: "layout_style", Value: "default"},
+		{Name: "active_theme", Value: "classic"},
+	}
+	for _, s := range defaultSettings {
+		DB.Where(models.SiteSetting{Name: s.Name}).FirstOrCreate(&s)
 	}
 
 	return nil

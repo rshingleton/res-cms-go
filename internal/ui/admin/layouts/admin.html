@@ -64,7 +64,7 @@
                 <i class="fas fa-file-alt mr-3 font-s2"></i> Articles
             </a>
             <a href="/manage/categories" class="sidenav-link hover-bg-slate-light-5 text-slate-dark-1 {{if eq .ActiveTab "categories"}}active{{end}}">
-                <i class="fas fa-folder-tree mr-3 font-s2"></i> Taxonomy
+                <i class="fas fa-file mr-3 font-s2"></i> Pages
             </a>
             <a href="/manage/comments" class="sidenav-link hover-bg-slate-light-5 text-slate-dark-1 {{if eq .ActiveTab "comments"}}active{{end}}">
                 <i class="fas fa-comments mr-3 font-s2"></i> Feedback
@@ -73,7 +73,7 @@
                 <i class="fas fa-users-gear mr-3 font-s2"></i> Accounts
             </a>
             <a href="/manage/themes" class="sidenav-link hover-bg-slate-light-5 text-slate-dark-1 {{if eq .ActiveTab "themes"}}active{{end}}">
-                <i class="fas fa-palette mr-3 font-s2"></i> Appearance
+                <i class="fas fa-palette mr-3 font-s2"></i> Theme
             </a>
             <a href="/manage/configs" class="sidenav-link hover-bg-slate-light-5 text-slate-dark-1 {{if eq .ActiveTab "settings"}}active{{end}}">
                 <i class="fas fa-cog mr-3 font-s2"></i> Settings
@@ -98,13 +98,20 @@
             Alpine.store('app', {
                 siteName: '{{.BlogName}}',
                 notify(message, type = 'info') {
-                    const colorClass = type === 'error' ? 'red light-4 text-red-dark-3 border-red-light-2' : 'blue light-4 text-blue-dark-3 border-blue-light-2';
-                    new Axentix.Toast().show({
-                        content: `<div class="flex flex-row align-center"><i class="fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'} mr-2"></i> ${message}</div>`,
-                        classes: colorClass + ' shadow-3 border-all-1',
-                        direction: 'top',
-                        position: 'right'
-                    });
+                    const colorClass = type === 'error' ? 'red' : 'blue';
+                    const icon = type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle';
+                    
+                    // Axentix 2.x Toast
+                    const toast = new Axentix.Toast(
+                        `<div class='d-flex vcenter'><i class='fas ${icon} mr-2'></i> ${message}</div>`,
+                        {
+                            classes: `${colorClass} light-4 text-${colorClass}-dark-3 shadow-1 rounded-1 border-all-1`,
+                            duration: 4000,
+                            direction: 'top',
+                            position: 'right'
+                        }
+                    );
+                    toast.show();
                 }
             });
         });
@@ -121,7 +128,7 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => {
-            new Axentix.Sidenav('#sidenav');
+            // Sidenav is auto-initialized by data-ax="sidenav"
         });
     </script>
 </body>

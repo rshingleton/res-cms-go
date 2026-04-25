@@ -1,0 +1,32 @@
+{{define "content"}}
+<div class="d-flex vcenter justify-center" style="min-height: 60vh;">
+    <div class="card white shadow-2 p-5 rounded-1" style="width: 100%; max-width: 420px; border: 4px solid black; box-shadow: 8px 8px 0px #000;">
+
+        <div class="text-center mb-5">
+            <div class="pixel-text font-s5 text-slate-900 mb-1">&#9632; PROFILE</div>
+            <div class="pixel-text font-s1 text-grey" style="font-size: 0.55rem; letter-spacing: 1px;">UPDATE YOUR DETAILS</div>
+        </div>
+
+        {{with .Flash}}
+        <div class="card blue-light-4 px-4 py-3 rounded-1 mb-4">
+            <span class="text-blue font-w700 font-s2">{{.}}</span>
+        </div>
+        {{end}}
+
+        <form method="POST" action="/profile">
+            <div class="form-field form-material mb-4">
+                <input type="email" id="profile-email" name="email" value="{{.User.Email}}" class="form-control font-w600" />
+                <label for="profile-email" class="pixel-text" style="font-size: 0.55rem;">EMAIL ADDRESS</label>
+            </div>
+            <div class="form-field form-material mb-5">
+                <input type="password" id="profile-password" name="password" class="form-control font-w600" />
+                <label for="profile-password" class="pixel-text" style="font-size: 0.55rem;">NEW PASSWORD (LEAVE BLANK TO KEEP)</label>
+            </div>
+            <button type="submit" class="btn blue rounded-1 shadow-1 font-w800 d-block" style="width: 100%;">
+                <span class="pixel-text" style="font-size: 0.55rem; letter-spacing: 1px;">&#9658; SAVE CHANGES</span>
+            </button>
+        </form>
+
+    </div>
+</div>
+{{end}}

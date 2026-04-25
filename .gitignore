@@ -1,0 +1,11 @@
+# ResCMS Git Ignore
+res-cms.db
+res-cms.db-shm
+res-cms.db-wal
+scratch/
+public/uploads/*
+!public/uploads/.gitkeep
+tmp/
+.DS_Store
+*.log
+bin/

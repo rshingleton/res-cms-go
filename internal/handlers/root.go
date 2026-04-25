@@ -33,8 +33,8 @@ func InitTemplates() error {
 
 // IndexHandler handles the home page
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
-	// Support both "/" and "/page/{page}"
-	if r.URL.Path != "/" && !strings.HasPrefix(r.URL.Path, "/page/") {
+	// Support only "/" — pagination via ?page=N query param
+	if r.URL.Path != "/" {
 		http.NotFound(w, r)
 		return
 	}
@@ -58,7 +58,7 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	db.DB.Model(&models.Entry{}).Where("status = ?", "published").Count(&total)
 
 	offset := (page - 1) * perPage
-	if err := db.DB.Preload("Author").Preload("Categories").Preload("Tags").
+	if err := db.DB.Preload("Author").Preload("Pages").Preload("Tags").
 		Where("status = ?", "published").
 		Order("created_at DESC").
 		Offset(offset).Limit(perPage).
@@ -82,6 +82,10 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 		layoutStyle = "default"
 	}
 
+	// Get system page for Home
+	var systemPage models.Page
+	db.DB.Where("is_system = ?", true).First(&systemPage)
+
 	// Get sidebar data
 	sidebar := getSidebarData()
 
@@ -92,6 +96,7 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 		"LayoutStyle": layoutStyle,
 		"Sidebar":     sidebar,
 		"Page":        page,
+		"SystemPage":  systemPage,
 		"TotalPages":  (total + int64(perPage) - 1) / int64(perPage),
 		"User":        middleware.OptionalUser(r),
 	}
@@ -118,7 +123,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var entry models.Entry
-	if err := db.DB.Preload("Author").Preload("Categories").Preload("Tags").
+	if err := db.DB.Preload("Author").Preload("Pages").Preload("Tags").
 		Preload("Comments", "status = ?", "approved").
 		Preload("Comments.Post"). // Need to update Comment model next
 		Where("slug = ? AND status = ?", slug, "published").
@@ -151,6 +156,40 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := renderTemplate(w, r, "public/post.html", data); err != nil {
 		log.Printf("Error rendering template: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
+}
+
+// PageHandler renders a dynamic page by slug
+func PageHandler(w http.ResponseWriter, r *http.Request) {
+	slug := strings.TrimPrefix(r.URL.Path, "/page/")
+	if slug == "" {
+		http.NotFound(w, r)
+		return
+	}
+
+	var page models.Page
+	if err := db.DB.Where("slug = ?", slug).First(&page).Error; err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Get blog name
+	var blogName string
+	db.DB.Model(&models.SiteSetting{}).Where("name = ?", "blog_name").Select("value").Scan(&blogName)
+	if blogName == "" {
+		blogName = "ResCMS"
+	}
+
+	data := map[string]interface{}{
+		"Page":     page,
+		"BlogName": blogName,
+		"Sidebar":  getSidebarData(),
+		"User":     middleware.OptionalUser(r),
+	}
+
+	if err := renderTemplate(w, r, "public/page.html", data); err != nil {
+		log.Printf("Error rendering page template: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
@@ -350,7 +389,7 @@ func EntriesByAccountHandler(w http.ResponseWriter, r *http.Request) {
 	db.DB.Model(&models.Entry{}).Where("account_id = ? AND status = ?", account.ID, "published").Count(&total)
 
 	offset := (page - 1) * perPage
-	if err := db.DB.Preload("Author").Preload("Categories").Preload("Tags").
+	if err := db.DB.Preload("Author").Preload("Pages").Preload("Tags").
 		Where("account_id = ? AND status = ?", account.ID, "published").
 		Order("created_at DESC").
 		Offset(offset).Limit(perPage).
@@ -389,13 +428,9 @@ func EntriesByAccountHandler(w http.ResponseWriter, r *http.Request) {
 
 // getSidebarData retrieves sidebar components
 func getSidebarData() map[string]interface{} {
-	var categories []models.Category
-	db.DB.Raw(`
-		SELECT c.* FROM categories c
-		JOIN (SELECT category_id, COUNT(*) as cnt FROM entry_categories GROUP BY category_id) pc
-		ON c.id = pc.category_id
-		ORDER BY pc.cnt DESC
-	`).Scan(&categories)
+	// Fetch ALL pages ordered by sort_order then title for consistent navbar
+	var pages []models.Page
+	db.DB.Order("sort_order ASC, title ASC").Find(&pages)
 
 	var recent []models.Entry
 	db.DB.Select("slug, entry_title").
@@ -420,10 +455,10 @@ func getSidebarData() map[string]interface{} {
 	`).Scan(&tags)
 
 	return map[string]interface{}{
-		"Categories": categories,
-		"Recent":     recent,
-		"Popular":    popular,
-		"Tags":       tags,
+		"Pages":   pages,
+		"Recent":  recent,
+		"Popular": popular,
+		"Tags":    tags,
 	}
 }
 

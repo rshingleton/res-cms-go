@@ -49,6 +49,23 @@ Themes are located in the `/themes` directory. Each theme requires:
 
 During development, ResCMS automatically reloads theme templates on every request, providing a "Hot Reload" experience.
 
+## 🗺 Roadmap
+
+### Current Focus: Rich Text & Media
+- [ ] Stabilize Quill Editor for Pages (retrieval & image resizing fixes)
+- [ ] Finalize CKEditor for Posts with full image upload/resize support
+- [ ] Standardize editorial styling across all themes (Classic & Pixel)
+
+### Upcoming: Advanced Theme Management
+- **Theme Editor**: Integrated code editor for JS and SCSS directly in the admin dashboard.
+  - Support for HTML, CSS, and JS with syntax highlighting and auto-formatting.
+- **Theme Cloning**: Allow users to duplicate existing themes from the UI for quick customization.
+- **In-Browser Customization**: Edit theme files without needing FTP or shell access.
+
+### Long Term
+- **Plugin System**: Hook-based architecture for extending CMS functionality.
+- **Multi-User Collaboration**: Live editing and revision history for posts.
+
 ## 📄 License
 
 This project is licensed under the MIT License.

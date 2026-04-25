@@ -1,0 +1,140 @@
+{{define "content"}}
+<div class="grix xs1 gutter-xs4" style="height: calc(100vh - 120px); overflow: hidden;">
+    <!-- Header -->
+    <div class="d-flex fx-row fx-space-between vcenter mb-2">
+        <div>
+            <h1 class="font-w900 font-s6 text-slate-900 mb-1">Theme Editor: <span class="text-blue">{{.ThemeName}}</span></h1>
+            <p class="text-grey font-s2 mb-0">Editing: <code class="text-blue-dark-2 font-w700">{{.SelectedFile}}</code></p>
+        </div>
+        <div class="d-flex g-gap-2">
+            <a href="/manage/themes" class="btn white text-slate-700 shadow-1 rounded-1 font-w700">
+                <i class="fas fa-times mr-2"></i> Close
+            </a>
+            <button id="save-button" class="btn blue rounded-1 shadow-1 font-w900">
+                <i class="fas fa-save mr-2"></i> Save File
+            </button>
+        </div>
+    </div>
+
+    <div class="grix xs1 lg4 gutter-xs4 mt-2" style="height: 100%;">
+        <!-- File Explorer -->
+        <div class="col-xs1 col-lg1 h-100 overflow-y-auto pr-2">
+            <div class="card white shadow-1 rounded-1 p-0 h-100 border-all-1 border-slate-light-4">
+                <div class="p-3 bg-slate-light-5 border-bottom-1 border-slate-light-4">
+                    <h3 class="font-w800 font-s1 uppercase text-slate-700 mb-0">Theme Files</h3>
+                </div>
+                <div class="p-2">
+                    <ul class="list-none p-0 m-0">
+                        {{range .Files}}
+                        <li class="mb-1">
+                            <a href="?file={{.}}" 
+                               class="d-flex vcenter p-2 rounded-1 transition-all {{if eq . $.SelectedFile}}bg-blue-light-5 text-blue font-w700{{else}}text-slate-700 hover-bg-slate-light-5{{end}}"
+                               style="text-decoration: none; font-size: 0.85rem;">
+                                <i class="fas {{if or (hasSuffix . ".js") (hasSuffix . ".ts")}}fa-js text-yellow{{else if or (hasSuffix . ".css") (hasSuffix . ".scss")}}fa-css3 text-blue{{else if hasSuffix . ".html"}}fa-html5 text-orange{{else}}fa-file-code text-grey{{end}} mr-2"></i>
+                                <span class="truncate">{{.}}</span>
+                            </a>
+                        </li>
+                        {{end}}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Editor Pane -->
+        <div class="col-xs1 col-lg3 h-100">
+            <div class="card white shadow-1 rounded-1 p-0 h-100 border-all-1 border-slate-light-4 overflow-hidden d-flex fx-col">
+                <div id="monaco-editor-container" style="width: 100%; flex-grow: 1;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Monaco Editor Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+<script>
+    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
+
+    let editor;
+    const initialContent = {{.FileContent | json}};
+    const fileName = "{{.SelectedFile}}";
+    const themeName = "{{.ThemeName}}";
+
+    require(['vs/editor/editor.main'], function() {
+        // Determine language
+        let language = 'html';
+        if (fileName.endsWith('.js')) language = 'javascript';
+        else if (fileName.endsWith('.css')) language = 'css';
+        else if (fileName.endsWith('.scss')) language = 'scss';
+        else if (fileName.endsWith('.json')) language = 'json';
+
+        editor = monaco.editor.create(document.getElementById('monaco-editor-container'), {
+            value: initialContent,
+            language: language,
+            theme: 'vs-light',
+            automaticLayout: true,
+            fontSize: 14,
+            minimap: { enabled: true },
+            lineNumbers: 'on',
+            roundedSelection: true,
+            scrollBeyondLastLine: false,
+            readOnly: false,
+            cursorStyle: 'line',
+            fontFamily: "'JetBrains Mono', 'Fira Code', monospace"
+        });
+
+        // Save on Ctrl+S
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function() {
+            saveFile();
+        });
+    });
+
+    async function saveFile() {
+        const content = editor.getValue();
+        const saveBtn = document.getElementById('save-button');
+        const originalText = saveBtn.innerHTML;
+        
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
+
+        try {
+            const formData = new FormData();
+            formData.append('theme', themeName);
+            formData.append('file', fileName);
+            formData.append('content', content);
+
+            const res = await fetch('/manage/themes/save', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (res.ok) {
+                Alpine.store('app').notify('File saved successfully', 'success');
+            } else {
+                Alpine.store('app').notify('Failed to save file', 'error');
+            }
+        } catch (err) {
+            console.error(err);
+            Alpine.store('app').notify('Error connecting to server', 'error');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalText;
+        }
+    }
+
+    document.getElementById('save-button').addEventListener('click', saveFile);
+</script>
+
+<style>
+    .truncate {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+    /* Fix for Monaco container height */
+    #monaco-editor-container {
+        min-height: 0;
+        flex: 1;
+    }
+</style>
+{{end}}

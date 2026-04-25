@@ -13,6 +13,7 @@ import (
 	"res-cms-go/internal/middleware"
 	"res-cms-go/internal/session"
 	"res-cms-go/internal/theme"
+	"res-cms-go/internal/models"
 	"encoding/json"
 	"strings"
 )
@@ -72,7 +73,10 @@ func main() {
 	
 	// Get active theme from settings or default
 	activeTheme := "classic"
-	// TODO: Fetch from DB
+	db.DB.Model(&models.SiteSetting{}).Where("name = ?", "active_theme").Select("value").Scan(&activeTheme)
+	if activeTheme == "" {
+		activeTheme = "classic"
+	}
 	
 	err = handlers.ThemeEngine.LoadTheme(activeTheme, template.FuncMap{
 		"formatDate": func(t interface{}) string { return "2024-01-01" },
@@ -85,6 +89,7 @@ func main() {
 			return template.JS(b)
 		},
 		"toUpper": func(s string) string { return strings.ToUpper(s) },
+		"safeHTML": func(s string) template.HTML { return template.HTML(s) },
 	})
 	if err != nil {
 		log.Printf("Warning: Failed to load theme %s: %v", activeTheme, err)
@@ -93,7 +98,7 @@ func main() {
 	// Set up routes
 	mux := http.NewServeMux()
 
-	// Static files
+	// Static files (includes /static/uploads/ for uploaded images)
 	fs := http.FileServer(http.Dir("public"))
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
 
@@ -103,9 +108,10 @@ func main() {
 	// Serve themes assets
 	mux.Handle("/themes/", http.StripPrefix("/themes/", http.FileServer(http.Dir("themes"))))
 
+
 	// Public routes
 	mux.HandleFunc("/", handlers.IndexHandler)
-	mux.HandleFunc("/page/{page}", handlers.IndexHandler)
+	mux.HandleFunc("/page/{slug}", handlers.PageHandler)
 	mux.HandleFunc("/entry/{slug}", handlers.PostHandler)
 	mux.HandleFunc("/post/{slug}", handlers.PostHandler) // Support legacy path
 	mux.HandleFunc("/comment/add", handlers.AddCommentHandler)
@@ -134,6 +140,8 @@ func main() {
 	mux.Handle("/api/admin/comments", middleware.Auth(http.HandlerFunc(handlers.APIAdminListCommentsHandler)))
 	mux.Handle("/api/admin/comments/", middleware.Auth(http.HandlerFunc(handlers.APIAdminUpdateCommentStatusHandler)))
 	mux.Handle("/api/admin/stats", middleware.Auth(http.HandlerFunc(handlers.APIAdminListStatsHandler)))
+	mux.Handle("/api/admin/pages/reorder", middleware.Auth(http.HandlerFunc(handlers.APIAdminReorderPagesHandler)))
+	mux.Handle("/api/upload/image", middleware.Auth(http.HandlerFunc(handlers.APIUploadImageHandler)))
 
 	// Admin routes
 	adminMux := http.NewServeMux()
@@ -148,8 +156,8 @@ func main() {
 	adminMux.HandleFunc("/manage/entries/delete/{id}", handlers.AdminDeletePostHandler)
 	adminMux.HandleFunc("/manage/entries/publish/{id}", handlers.AdminPublishPostHandler)
 	adminMux.HandleFunc("/manage/entries/draft/{id}", handlers.AdminDraftPostHandler)
-	adminMux.HandleFunc("/manage/categories", handlers.AdminListCategoriesHandler)
-	adminMux.HandleFunc("/manage/categories/new", handlers.AdminAddCategoryHandler)
+	adminMux.HandleFunc("GET /manage/categories", handlers.AdminListCategoriesHandler)
+	adminMux.HandleFunc("POST /manage/categories", handlers.AdminAddCategoryHandler)
 	adminMux.HandleFunc("/manage/categories/edit/{id}", handlers.AdminEditCategoryFormHandler)
 	adminMux.HandleFunc("/manage/categories/update/{id}", handlers.AdminUpdateCategoryHandler)
 	adminMux.HandleFunc("/manage/categories/delete/{id}", handlers.AdminDeleteCategoryHandler)
@@ -164,6 +172,9 @@ func main() {
 	adminMux.HandleFunc("/manage/accounts/delete/{id}", handlers.AdminDeleteUserHandler)
 	adminMux.HandleFunc("/manage/configs", handlers.AdminSettingsHandler)
 	adminMux.HandleFunc("/manage/themes", handlers.AdminListThemesHandler)
+	adminMux.HandleFunc("/manage/themes/edit/{theme}", handlers.AdminThemeEditorHandler)
+	adminMux.HandleFunc("/manage/themes/save", handlers.AdminThemeSaveFileHandler)
+	adminMux.HandleFunc("/manage/themes/copy/{theme}", handlers.AdminThemeCopyHandler)
 	adminMux.HandleFunc("/manage/themes/upload", handlers.AdminUploadThemeHandler)
 	adminMux.HandleFunc("/manage/themes/activate/{name}", handlers.AdminActivateThemeHandler)
 	adminMux.HandleFunc("/manage/themes/export/{name}", handlers.AdminExportThemeHandler)
@@ -205,6 +216,8 @@ func loadTemplates() error {
 			return template.JS(b)
 		},
 		"toUpper": func(s string) string { return strings.ToUpper(s) },
+		"safeHTML": func(s string) template.HTML { return template.HTML(s) },
+		"hasSuffix": func(s, suffix string) bool { return strings.HasSuffix(s, suffix) },
 	})
 
 	// Load Admin Layout
