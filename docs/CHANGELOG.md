@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.0] - 2026-04-26 (Public Site Fixes & SSR Migration)
+
+### Added
+- **Server-Side Rendering (SSR) Migration**:
+    - Refactored `Classic` and `Pixel Standard` themes from a broken client-side Alpine.js fetch pattern to native Go Server-Side Rendering.
+    - This ensures articles and sidebar content are rendered immediately, improving SEO and site reliability.
+- **Enhanced Site Layout**:
+    - Widened the main site container to 1400px (95% width) for better usage of modern screen space.
+    - Right-justified article dates in the "Recent Posts" sidebar for a more structured, professional appearance.
+
+### Changed
+- **UI Cleanup**:
+    - Removed redundant "Articles" feed from the bottom of the home page.
+    - Removed the static "Main" category label from sidebar posts to reduce clutter.
+    - Standardized date formatting across themes.
+
+### Fixed
+- **Critical Sidebar Date Bug**: Resolved a backend bug where `created_at` was excluded from sidebar database queries, causing posts to show "Jan 01" (the zero-value date).
+- **Pixel Theme Timestamp Bug**: Fixed a literal "JAN" string in the Pixel Standard theme's date format that hardcoded all months to January.
+- **Monaco Editor Stability**: Finalized the "nuclear" flexbox layout fixes to prevent the editor from collapsing to 1px height.
+
 ## [2.1.0] - 2026-04-26 (Editor Stability & Monaco Fixes)
 
 ### Added

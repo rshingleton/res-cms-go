@@ -22,17 +22,20 @@ ResCMS Go has been fully migrated to a Go backend and stabilized for production 
 - **Theme Management**: 
     - Duplicate themes with custom names via modal.
     - ZIP export and upload functionality.
+- **Theme Engine & SSR**: 
+    - **SSR Migration**: Public themes (`Classic`, `Pixel Standard`) use Go Server-Side Rendering for all core content.
+    - Avoid using client-side `fetch` for basic article lists to ensure SEO and performance.
 - **Media**: Images uploaded via the editor are saved to `/public/uploads/`.
 
-## ⚠️ Important Implementation Details
-- **Automated Injections**: Raw CSS/JS entered in the Super Editor is automatically wrapped in tags. Do not add manual `<style>` or `<script>` tags in the "Global Injections" section.
-- **Pages as Categories**: The system uses `models.Page` for both standalone pages and categories.
-- **JSON Injection**: Use the `| json` or `| js` template filters when injecting Go models into scripts.
+## 🔑 Site Refinements (v2.2.0)
+- **Widened Layout**: The main site container is set to 1400px to maximize screen usage.
+- **Sidebar Clarity**: Dates are right-justified and redundant category labels have been removed.
+- **Timestamp Accuracy**: Fixed backend queries and template formats to ensure correct article dates are displayed.
 
 ## 🗺 Critical Path for Next Development
 1. **Media Library**: Build a dedicated file browser in the admin panel to manage existing uploads.
-2. **Revision History**: Add a table to track content versions and allow rollbacks.
-3. **Advanced Editor Features**: Implement search-and-replace and multi-file tabs in the Super Editor.
+2. **Advanced Editor Features**: Implement search-and-replace and multi-file tabs in the Super Editor.
+3. **Draft Workflow**: Implement a "Preview" mode for draft posts before they go public.
 
 ## 🚀 Running the Project
 ```bash

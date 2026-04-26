@@ -433,7 +433,7 @@ func getSidebarData() map[string]interface{} {
 	db.DB.Order("sort_order ASC, title ASC").Find(&pages)
 
 	var recent []models.Entry
-	db.DB.Select("slug, entry_title").
+	db.DB.Select("slug, entry_title, created_at").
 		Where("status = ?", "published").
 		Order("created_at DESC").
 		Limit(5).
@@ -441,7 +441,7 @@ func getSidebarData() map[string]interface{} {
 
 	var popular []models.Entry
 	db.DB.Raw(`
-		SELECT p.slug, p.entry_title, (SELECT COUNT(*) FROM comments c WHERE c.entry_id = p.id) as cnt
+		SELECT p.slug, p.entry_title, p.created_at, (SELECT COUNT(*) FROM comments c WHERE c.entry_id = p.id) as cnt
 		FROM entries p WHERE p.status = 'published'
 		ORDER BY cnt DESC LIMIT 5
 	`).Scan(&popular)

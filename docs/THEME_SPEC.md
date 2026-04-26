@@ -79,3 +79,30 @@ Example `layouts/main.html`:
 </body>
 </html>
 ```
+## 6. Server-Side Data Rendering (SSR)
+ResCMS prioritizes Server-Side Rendering for all core content to ensure maximum SEO and performance. Themes receive a data map containing the following primary objects:
+
+- **`.Entries`**: A list of `models.Entry` objects for the main feed.
+- **`.SystemPage`**: The page object for the home page (useful for static content above the feed).
+- **`.Sidebar`**: A map containing:
+    - `Recent`: List of the 5 most recent posts.
+    - `Popular`: List of the 5 most commented posts.
+    - `Pages`: List of all pages/categories for navigation.
+- **`.Entry`**: The current article object (available on `post.html` and `page.html`).
+
+### Helper Functions
+The following Go template functions are registered and available for use in themes:
+- `toUpper`: Transforms string to uppercase.
+- `safeHTML`: Renders raw HTML string (use with `.Content`).
+- `formatDate`: Formats a `time.Time` object using standard Go layout strings.
+- `js`: Safely injects Go objects as JSON/JS literals.
+- `hasPrefix`/`trimPrefix`/`replace`: Standard string manipulation utilities.
+
+Example Sidebar Usage:
+```html
+{{range .Sidebar.Recent}}
+  <a href="/entry/{{.Slug}}">
+    {{.EntryTitle}} - {{.CreatedAt.Format "Jan 02"}}
+  </a>
+{{end}}
+```
