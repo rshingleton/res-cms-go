@@ -98,7 +98,11 @@
                                 #<span x-text="tag.title || tag.name"></span>
                             </div>
                         </template>
-                    </div>
+                <div class="mt-4 pt-4 border-top-1 border-slate-light-4">
+                    <label class="form-check d-flex vcenter cursor-pointer">
+                        <input type="checkbox" x-model="post.comments_enabled" @change="queueSave()" class="mr-3">
+                        <span class="font-w700 text-slate-800">Enable Comments</span>
+                    </label>
                 </div>
 
                 <div class="mt-4 pt-4 border-top-1 border-slate-light-4">
@@ -130,7 +134,7 @@
 <script>
 function postEditor() {
     return {
-        post: { id: 0, title: '', slug: '', content: '', status: 'draft', created_at: '' },
+        post: { id: 0, title: '', slug: '', content: '', status: 'draft', created_at: '', comments_enabled: true },
         pages: [], tags: [], selectedPages: [], selectedTags: [],
         saving: false, lastSaved: null, saveTimeout: null,
         quill: null,
@@ -144,6 +148,7 @@ function postEditor() {
                 this.post.slug = entry.slug || '';
                 this.post.content = entry.content || '';
                 this.post.status = entry.status || 'draft';
+                this.post.comments_enabled = entry.comments_enabled !== false; // Default to true
                 if (entry.created_at) {
                     // Convert RFC3339 to datetime-local format (YYYY-MM-DDThh:mm)
                     const d = new Date(entry.created_at);
@@ -240,6 +245,7 @@ function postEditor() {
                     slug: this.post.slug,
                     content: this.post.content,
                     status: this.post.status,
+                    comments_enabled: this.post.comments_enabled,
                     created_at: this.post.created_at ? new Date(this.post.created_at).toISOString() : null,
                     pages: this.selectedPages.map(id => parseInt(id)),
                     tags: this.selectedTags.map(id => parseInt(id))

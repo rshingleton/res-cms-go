@@ -150,6 +150,20 @@ func APISubmitCommentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if comments are allowed
+	var post models.Post
+	if err := db.DB.First(&post, input.PostID).Error; err != nil {
+		JSONResponse(w, http.StatusNotFound, map[string]string{"error": "post not found"})
+		return
+	}
+
+	var globalEnabled string
+	db.DB.Model(&models.SiteSetting{}).Where("name = ?", "posts_comments_enabled").Select("value").Scan(&globalEnabled)
+	if globalEnabled != "1" || !post.CommentsEnabled {
+		JSONResponse(w, http.StatusForbidden, map[string]string{"error": "comments are disabled"})
+		return
+	}
+
 	comment := models.Comment{
 		PostID: input.PostID,
 		Author:  input.Author,
@@ -247,9 +261,10 @@ func APIAdminSavePostHandler(w http.ResponseWriter, r *http.Request) {
 		Slug    string `json:"slug"`
 		Content string `json:"content"`
 		Status    string `json:"status"`
-		CreatedAt string `json:"created_at"`
-		Pages     []uint `json:"pages"`
-		Tags      []uint `json:"tags"`
+		CreatedAt       string `json:"created_at"`
+		CommentsEnabled bool   `json:"comments_enabled"`
+		Pages           []uint `json:"pages"`
+		Tags            []uint `json:"tags"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -273,6 +288,7 @@ func APIAdminSavePostHandler(w http.ResponseWriter, r *http.Request) {
 		entry.Slug = input.Slug
 		entry.Content = input.Content
 		entry.Status = input.Status
+		entry.CommentsEnabled = input.CommentsEnabled
 		if input.CreatedAt != "" {
 			if t, err := time.Parse(time.RFC3339, input.CreatedAt); err == nil {
 				entry.CreatedAt = t
@@ -287,8 +303,9 @@ func APIAdminSavePostHandler(w http.ResponseWriter, r *http.Request) {
 			AccountID:  user.UserID,
 			Title: input.Title,
 			Slug:       input.Slug,
-			Content:    input.Content,
-			Status:     input.Status,
+			Content:         input.Content,
+			Status:          input.Status,
+			CommentsEnabled: input.CommentsEnabled,
 		}
 		if input.CreatedAt != "" {
 			if t, err := time.Parse(time.RFC3339, input.CreatedAt); err == nil {

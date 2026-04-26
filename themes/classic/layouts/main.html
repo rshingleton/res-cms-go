@@ -21,6 +21,21 @@
         [x-cloak] { display: none !important; }
         body { font-family: 'Outfit', sans-serif; }
         .container { max-width: 1400px; width: 95%; }
+
+        /* Sidebar adjustment: reduce sidebar width and increase content */
+        @media (min-width: 960px) {
+            .grix.lg3 {
+                grid-template-columns: 1fr 410px !important;
+            }
+            .grix.lg3 > .col-lg2 {
+                grid-column: span 1 !important;
+                width: 100% !important;
+            }
+            .grix.lg3 > .col-lg1 {
+                grid-column: span 1 !important;
+                width: 100% !important;
+            }
+        }
     </style>
     {{.res_custom_css_style}}
 

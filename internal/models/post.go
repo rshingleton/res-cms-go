@@ -29,8 +29,9 @@ type Post struct {
 	Slug       string    `gorm:"uniqueIndex;size:255;not null" json:"slug"`
 	Content    string    `gorm:"type:text" json:"content"`
 	Status     string    `gorm:"default:draft" json:"status"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	CommentsEnabled bool      `gorm:"default:true" json:"comments_enabled"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
 
 	// Associations
 	Author   User      `gorm:"foreignKey:AccountID" json:"author,omitempty"`

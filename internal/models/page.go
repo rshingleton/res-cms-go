@@ -29,8 +29,10 @@ type Page struct {
 	Content   string    `gorm:"type:text" json:"content"`
 	IsSystem  bool      `gorm:"default:false" json:"is_system"`
 	SortOrder int       `gorm:"default:0" json:"sort_order"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Layout          string    `gorm:"size:255" json:"layout"`
+	CommentsEnabled bool      `gorm:"default:true" json:"comments_enabled"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
 
 	// Associations
 	Posts []Post `gorm:"many2many:post_pages;" json:"posts,omitempty"`

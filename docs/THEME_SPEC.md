@@ -11,7 +11,8 @@ A valid theme must follow this structure:
 ├── layouts/             # Required: Page templates
 │   ├── main.html        # Optional: Master layout wrapper
 │   ├── index.html       # Required: Homepage / Post grid
-│   ├── post.html        # Required: Single post view
+│   ├── post.html        # Required: Default layout for posts AND pages
+│   ├── page.html        # Required: Alternative layout for pages
 │   └── 404.html         # Optional: Error page
 ├── partials/            # Required: Reusable UI fragments
 │   ├── header.html
@@ -104,5 +105,27 @@ Example Sidebar Usage:
   <a href="/post/{{.Slug}}">
     {{.Title}} - {{.CreatedAt.Format "Jan 02"}}
   </a>
+{{end}}
+```
+
+## 7. Custom Page Layouts
+ResCMS allows site administrators to designate specific layouts for custom pages. 
+- By default, pages use `post.html`.
+- Administrators can choose any `.html` file present in the `layouts/` directory of the active theme.
+- When creating or editing a page, the "Theme Layout" dropdown will list all available templates.
+- This allows for specialized layouts like `landing-page.html`, `contact.html`, or `full-width.html`.
+
+## 8. Comment Controls
+Themes must respect the visibility settings for comments provided by the CMS.
+- **`.AllowComments`**: A boolean flag indicating if comments should be displayed and allowed for the current post or page. This flag takes into account both global system settings and per-item toggles.
+- **Usage**: Wrap comment sections in an `{{if .AllowComments}}` block to ensure they are hidden when disabled.
+
+Example:
+```html
+{{if .AllowComments}}
+  <div id="comments">
+    <h3>Comments</h3>
+    <!-- Render comments and form here -->
+  </div>
 {{end}}
 ```

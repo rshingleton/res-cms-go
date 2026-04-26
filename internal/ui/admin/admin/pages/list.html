@@ -23,6 +23,21 @@
                 <input type="text" id="page-slug" name="slug" x-model="slug" class="form-control font-w600" required />
                 <label for="page-slug">URL Slug</label>
             </div>
+            <div class="form-field form-material mb-4">
+                <select id="page-layout" name="layout" class="form-control font-w600">
+                    <option value="">Default (post.html)</option>
+                    {{range .Layouts}}
+                    <option value="{{.}}">{{.}}</option>
+                    {{end}}
+                </select>
+                <label for="page-layout">Theme Layout</label>
+            </div>
+            <div class="mb-4">
+                <label class="form-check d-flex vcenter cursor-pointer">
+                    <input type="checkbox" name="comments_enabled" class="mr-3">
+                    <span class="font-w700 text-slate-800">Enable Comments</span>
+                </label>
+            </div>
             <div class="d-flex fx-row fx-right g-gap-3 mt-5">
                 <button type="button" class="btn white text-grey shadow-0 modal-close font-w700">Cancel</button>
                 <button type="submit" class="btn blue rounded-1 shadow-1 font-w800">Create Page</button>

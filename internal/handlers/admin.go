@@ -173,6 +173,7 @@ func AdminAddPostHandler(w http.ResponseWriter, r *http.Request) {
 	status := r.PostForm.Get("status")
 	pageIDs := r.PostForm["pages"]
 	tagIDs := r.PostForm["tags"]
+	commentsEnabled := r.PostForm.Get("comments_enabled") == "on"
 
 	if title == "" || slug == "" {
 		middleware.GenerateFlashCookie(w, "Title and slug are required")
@@ -184,8 +185,9 @@ func AdminAddPostHandler(w http.ResponseWriter, r *http.Request) {
 		AccountID:  user.UserID,
 		Title: title,
 		Slug:       slug,
-		Content:    content,
-		Status:     status,
+		Content:         content,
+		Status:          status,
+		CommentsEnabled: commentsEnabled,
 	}
 
 	if err := db.DB.Create(&post).Error; err != nil {
@@ -290,12 +292,14 @@ func AdminUpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 	status := r.PostForm.Get("status")
 	pageIDs := r.PostForm["pages"]
 	tagIDs := r.PostForm["tags"]
+	commentsEnabled := r.PostForm.Get("comments_enabled") == "on"
 
 	updates := map[string]interface{}{
 		"title":   title,
 		"slug":    slug,
-		"content": content,
-		"status":  status,
+		"content":          content,
+		"status":           status,
+		"comments_enabled": commentsEnabled,
 	}
 
 	if err := db.DB.Model(&models.Post{}).Where("id = ?", id).Updates(updates).Error; err != nil {
@@ -409,6 +413,7 @@ func AdminListPagesHandler(w http.ResponseWriter, r *http.Request) {
 		"BlogName":  getBlogName(),
 		"User":      user,
 		"Pages":     pages,
+		"Layouts":   getAvailableLayouts(),
 		"ActiveTab": "pages",
 	}
 
@@ -434,6 +439,8 @@ func AdminAddPageHandler(w http.ResponseWriter, r *http.Request) {
 
 	title := r.PostForm.Get("name")
 	slug := r.PostForm.Get("slug")
+	layout := r.PostForm.Get("layout")
+	commentsEnabled := r.PostForm.Get("comments_enabled") == "on"
 
 	if title == "" || slug == "" {
 		middleware.GenerateFlashCookie(w, "Title and slug are required")
@@ -443,8 +450,10 @@ func AdminAddPageHandler(w http.ResponseWriter, r *http.Request) {
 
 	page := models.Page{
 		Title:    title,
-		Slug:     slug,
-		IsSystem: false,
+		Slug:            slug,
+		Layout:          layout,
+		CommentsEnabled: commentsEnabled,
+		IsSystem:        false,
 	}
 
 	if err := db.DB.Create(&page).Error; err != nil {
@@ -489,6 +498,7 @@ func AdminEditPageFormHandler(w http.ResponseWriter, r *http.Request) {
 		"BlogName":  getBlogName(),
 		"User":      user,
 		"Page":      page,
+		"Layouts":   getAvailableLayouts(),
 		"ActiveTab": "pages",
 	}
 
@@ -525,13 +535,17 @@ func AdminUpdatePageHandler(w http.ResponseWriter, r *http.Request) {
 	title := r.PostForm.Get("name")
 	slug := r.PostForm.Get("slug")
 	content := r.PostForm.Get("content")
+	layout := r.PostForm.Get("layout")
+	commentsEnabled := r.PostForm.Get("comments_enabled") == "on"
 
 	log.Printf("Updating page ID %d: title='%s', slug='%s', content_len=%d", id, title, slug, len(content))
 
 	updates := map[string]interface{}{
 		"title":   title,
 		"slug":    slug,
-		"content": content,
+		"content":          content,
+		"layout":           layout,
+		"comments_enabled": commentsEnabled,
 	}
 
 	if err := db.DB.Model(&models.Page{}).Where("id = ?", id).Updates(updates).Error; err != nil {
@@ -906,6 +920,18 @@ func AdminSettingsHandler(w http.ResponseWriter, r *http.Request) {
 				db.DB.Where(models.SiteSetting{Name: key}).FirstOrCreate(&setting)
 				db.DB.Model(&setting).Update("value", val)
 			}
+		}
+
+		// Handle checkboxes (toggles) which might be missing if unchecked
+		toggles := []string{"posts_comments_enabled", "pages_comments_enabled"}
+		for _, key := range toggles {
+			val := "0"
+			if r.PostForm.Get(key) == "on" || r.PostForm.Get(key) == "1" {
+				val = "1"
+			}
+			setting := models.SiteSetting{Name: key}
+			db.DB.Where(models.SiteSetting{Name: key}).FirstOrCreate(&setting)
+			db.DB.Model(&setting).Update("value", val)
 		}
 
 		// Handle AJAX request from Monaco editor or normal form
@@ -1338,4 +1364,17 @@ func AdminThemeCopyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/manage/themes", http.StatusFound)
+}
+
+// getAvailableLayouts returns a list of available layouts from the active theme
+func getAvailableLayouts() []string {
+	var layouts []string
+	if ThemeEngine != nil {
+		for k := range ThemeEngine.Templates {
+			if strings.HasSuffix(k, ".html") {
+				layouts = append(layouts, k)
+			}
+		}
+	}
+	return layouts
 }

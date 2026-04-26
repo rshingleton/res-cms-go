@@ -160,6 +160,8 @@ func seed() error {
 		{Name: "blog_name", Value: "ResCMS"},
 		{Name: "layout_style", Value: "default"},
 		{Name: "active_theme", Value: "classic"},
+		{Name: "posts_comments_enabled", Value: "1"},
+		{Name: "pages_comments_enabled", Value: "0"}, // Pages usually have comments disabled by default
 	}
 	for _, s := range defaultSettings {
 		DB.Where(models.SiteSetting{Name: s.Name}).FirstOrCreate(&s)

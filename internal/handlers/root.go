@@ -20,6 +20,7 @@ package handlers
 import (
 	"fmt"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
 	"res-cms-go/internal/db"
@@ -163,12 +164,18 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get sidebar data
 	sidebar := getSidebarData()
+	settingsMap := getSettingsMap()
+
+	// Determine if comments are allowed
+	globalCommentsEnabled := settingsMap["posts_comments_enabled"] == "1"
+	allowComments := globalCommentsEnabled && entry.CommentsEnabled
 
 	data := map[string]interface{}{
-		"Post":     entry,
-		"BlogName": blogName,
-		"Sidebar":  sidebar,
-		"User":     middleware.OptionalUser(r),
+		"Post":          entry,
+		"BlogName":      blogName,
+		"Sidebar":       sidebar,
+		"AllowComments": allowComments,
+		"User":          middleware.OptionalUser(r),
 	}
 
 	if err := renderTemplate(w, r, "public/post.html", data); err != nil {
@@ -198,14 +205,37 @@ func PageHandler(w http.ResponseWriter, r *http.Request) {
 		blogName = "ResCMS"
 	}
 
+	// Determine if comments are allowed
+	settingsMap := getSettingsMap()
+	globalCommentsEnabled := settingsMap["pages_comments_enabled"] == "1"
+	allowComments := globalCommentsEnabled && page.CommentsEnabled
+
 	data := map[string]interface{}{
-		"Page":     page,
-		"BlogName": blogName,
-		"Sidebar":  getSidebarData(),
-		"User":     middleware.OptionalUser(r),
+		"Page": page,
+		"Post": map[string]interface{}{
+			"ID":        page.ID,
+			"Title":     page.Title,
+			"Content":   page.Content,
+			"CreatedAt": page.CreatedAt,
+			"UpdatedAt": page.UpdatedAt,
+			"Slug":      page.Slug,
+			"Author":    map[string]interface{}{"Username": "Admin"},
+			"Pages":     nil,
+			"Tags":      nil,
+			"Comments":  nil,
+		},
+		"BlogName":      blogName,
+		"Sidebar":       getSidebarData(),
+		"AllowComments": allowComments,
+		"User":          middleware.OptionalUser(r),
 	}
 
-	if err := renderTemplate(w, r, "public/page.html", data); err != nil {
+	templateName := "public/post.html"
+	if page.Layout != "" {
+		templateName = "public/" + page.Layout
+	}
+
+	if err := renderTemplate(w, r, templateName, data); err != nil {
 		log.Printf("Error rendering page template: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
@@ -228,6 +258,22 @@ func AddCommentHandler(w http.ResponseWriter, r *http.Request) {
 	postID, err := strconv.ParseUint(postIDStr, 10, 32)
 	if err != nil {
 		log.Printf("Invalid post ID: %v", err)
+		http.Redirect(w, r, r.Referer(), http.StatusFound)
+		return
+	}
+
+	// Check if comments are allowed for this post
+	var post models.Post
+	if err := db.DB.First(&post, postID).Error; err != nil {
+		log.Printf("Post not found: %v", err)
+		http.Redirect(w, r, r.Referer(), http.StatusFound)
+		return
+	}
+
+	settingsMap := getSettingsMap()
+	globalCommentsEnabled := settingsMap["posts_comments_enabled"] == "1"
+	if !globalCommentsEnabled || !post.CommentsEnabled {
+		middleware.GenerateFlashCookie(w, "Comments are disabled for this post")
 		http.Redirect(w, r, r.Referer(), http.StatusFound)
 		return
 	}
@@ -479,6 +525,17 @@ func getSidebarData() map[string]interface{} {
 	}
 }
 
+// getSettingsMap returns all site settings as a map
+func getSettingsMap() map[string]string {
+	var settings []models.SiteSetting
+	db.DB.Find(&settings)
+	settingsMap := make(map[string]string)
+	for _, s := range settings {
+		settingsMap[s.Name] = s.Value
+	}
+	return settingsMap
+}
+
 // renderTemplate renders a template with layout
 var renderTemplate = func(w http.ResponseWriter, r *http.Request, name string, data map[string]interface{}) error {
 	// Get session
@@ -499,12 +556,7 @@ var renderTemplate = func(w http.ResponseWriter, r *http.Request, name string, d
 	data["Flash"] = middleware.GetFlashFromRequest(w, r)
 
 	// Get all settings for injection
-	var settings []models.SiteSetting
-	db.DB.Find(&settings)
-	settingsMap := make(map[string]string)
-	for _, s := range settings {
-		settingsMap[s.Name] = s.Value
-	}
+	settingsMap := getSettingsMap()
 
 	// Inject settings with res_ prefix
 	for k, v := range settingsMap {
@@ -562,7 +614,14 @@ var renderTemplate = func(w http.ResponseWriter, r *http.Request, name string, d
 				entryPoint = "layouts/main.html"
 			}
 
-			return t.ExecuteTemplate(w, entryPoint, data)
+			// Buffer the output to avoid "superfluous response.WriteHeader" on template error
+			var buf strings.Builder
+			if err := t.ExecuteTemplate(&buf, entryPoint, data); err != nil {
+				return err
+			}
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			_, err := io.WriteString(w, buf.String())
+			return err
 		}
 	}
 
@@ -574,10 +633,14 @@ var renderTemplate = func(w http.ResponseWriter, r *http.Request, name string, d
 		}
 
 		log.Printf("Executing template %s with layout %s", name, layout)
-		err := t.ExecuteTemplate(w, layout, data)
-		if err != nil {
-			log.Printf("Template execution error: %v", err)
+		
+		// Buffer the output
+		var buf strings.Builder
+		if err := t.ExecuteTemplate(&buf, layout, data); err != nil {
+			return err
 		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, err := io.WriteString(w, buf.String())
 		return err
 	}
 

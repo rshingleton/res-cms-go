@@ -15,6 +15,11 @@
                 class="btn rounded-1 font-w800 no-shadow transition-all">
             SEO & Metadata
         </button>
+        <button @click="tab = 'comments'" 
+                :class="tab === 'comments' ? 'blue text-white shadow-1' : 'transparent text-grey hover-bg-slate-light-4'"
+                class="btn rounded-1 font-w800 no-shadow transition-all">
+            Comments
+        </button>
     </div>
 
     <form method="POST" action="/manage/configs" class="w-100" id="settings-form">
@@ -48,6 +53,27 @@
             <div class="form-field form-material mb-4">
                 <input type="text" id="ga_id" name="ga_id" value="{{index .Settings "ga_id"}}" placeholder="G-XXXXXXXXXX" class="form-control font-w700 text-slate-800">
                 <label for="ga_id" class="active">Google Analytics Tracking ID</label>
+            </div>
+        </div>
+
+        <!-- Comments Tab -->
+        <div x-show="tab === 'comments'" class="card white rounded-1 shadow-1 p-5 mb-5 w-100 border-all-1 border-slate-light-4">
+            <h3 class="font-w900 font-s4 text-slate-900 mb-4 border-bottom-1 border-slate-light-5 pb-2">Global Comment Settings</h3>
+            
+            <div class="mb-4">
+                <label class="form-check d-flex vcenter cursor-pointer">
+                    <input type="checkbox" name="posts_comments_enabled" {{if eq (index .Settings "posts_comments_enabled") "1"}}checked{{end}} class="mr-3">
+                    <span class="font-w700 text-slate-800">Enable Comments on Posts by default</span>
+                </label>
+                <p class="font-s1 text-grey ml-5 mt-1">If disabled, comments will be turned off for all posts regardless of individual settings.</p>
+            </div>
+
+            <div class="mb-4 mt-5">
+                <label class="form-check d-flex vcenter cursor-pointer">
+                    <input type="checkbox" name="pages_comments_enabled" {{if eq (index .Settings "pages_comments_enabled") "1"}}checked{{end}} class="mr-3">
+                    <span class="font-w700 text-slate-800">Enable Comments on Pages by default</span>
+                </label>
+                <p class="font-s1 text-grey ml-5 mt-1">Usually disabled for static pages.</p>
             </div>
         </div>
 

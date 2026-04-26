@@ -44,6 +44,7 @@
                 {{end}}
             </article>
 
+            {{if .AllowComments}}
             <!-- Comments -->
             <div class="card white p-4" style="border: 4px solid black; box-shadow: 6px 6px 0px #000;">
                 <h3 class="pixel-text font-s3 text-slate-900 mb-4 pb-3" style="border-bottom: 3px solid black; font-size: 0.65rem; letter-spacing: 1px;">
@@ -82,6 +83,7 @@
                     </button>
                 </form>
             </div>
+            {{end}}
         </div>
 
         <!-- RIGHT: Sidebar (1 col) -->
