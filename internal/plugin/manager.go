@@ -26,6 +26,9 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"res-cms-go/internal/db"
+	"res-cms-go/internal/middleware"
+	"res-cms-go/internal/models"
 	"strings"
 	"sync"
 )
@@ -171,11 +174,11 @@ func (m *Manager) Load(slug string) error {
 					// Plugin routes are proxied through a thin adapter that
 					// passes the request path as JSON and returns an HTTP response body.
 					pRoute := route
-					mux.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+					mux.Handle(pattern, middleware.APIAuth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 						log.Printf("plugin %s: serving %s", pSlug, pRoute.Pattern)
 						w.Header().Set("Content-Type", "text/plain")
 						fmt.Fprintf(w, "Plugin %s serving %s", pSlug, pRoute.Pattern)
-					})
+					})))
 				}
 			})
 		}

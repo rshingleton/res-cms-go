@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.0] - 2026-04-26 (API Authentication Bridge)
+
+### Added
+- **API Authentication Bridge**:
+    - Implemented a secure bridge for internal CMS communication with the REST API.
+    - Added support for `X-ResCMS-Bridge` header authentication in `APIAuth` and `AdminAPIAuth` middlewares.
+    - Allows trusted services to bypass session-based cookie authentication using a configurable `bridge_key`.
+- **System Session Context**:
+    - Requests authenticated via the bridge are automatically assigned a "system" user context with administrative privileges.
+
+### Changed
+- **Configuration Schema Update**:
+    - Added `bridge_key` to `internal/config`.
+    - Updated `rescms.yml` with a default `dev-bridge-key` for local development.
+
 ## [2.3.0] - 2026-04-26 (Multi-Database Support)
 
 ### Added

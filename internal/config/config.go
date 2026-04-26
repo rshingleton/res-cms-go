@@ -30,6 +30,7 @@ type Config struct {
 	SQLiteDSN    string         `yaml:"sqlite_dsn,omitempty"`
 	SessionStore string         `yaml:"session_store,omitempty"`
 	Production   bool           `yaml:"production,omitempty"`
+	BridgeKey    string         `yaml:"bridge_key,omitempty"`
 	Database     DatabaseConfig `yaml:"database,omitempty"`
 }
 
@@ -61,6 +62,9 @@ func Load(path string) (*Config, error) {
 	}
 	if cfg.SQLiteDSN == "" {
 		cfg.SQLiteDSN = "data/rescms.db"
+	}
+	if cfg.BridgeKey == "" {
+		cfg.BridgeKey = "dev-bridge-key"
 	}
 
 	appConfig = &cfg

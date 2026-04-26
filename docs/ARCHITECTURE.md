@@ -42,6 +42,12 @@ High-performance, sandboxed extensibility layer.
 - **Plugin**: Stores plugin state (enabled/disabled) and metadata.
 - **SiteSetting**: Stores all configuration and global customizations.
 
+### 6. Authentication Bridge (`internal/middleware/auth.go`)
+ResCMS implements a dual-mode authentication system for its REST API.
+- **Session-Based**: Standard web requests use the `rescms_session` cookie, which stores an encrypted, server-side validated session.
+- **Bridge-Based**: Internal components or external trusted services can authenticate using a pre-shared key via the `X-ResCMS-Bridge` header. This bypasses cookie requirements and provides a "system" user context with administrative rights.
+- **Context Propagation**: Both methods inject a `*session.Session` object into the request context, ensuring handlers can consistently verify user permissions and identity.
+
 ## Project Structure
 ```text
 res-cms-go/

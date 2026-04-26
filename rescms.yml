@@ -4,6 +4,7 @@ secrets:
 listen: :3000
 
 production: false
+bridge_key: dev-bridge-key
 
 database:
   type: postgres

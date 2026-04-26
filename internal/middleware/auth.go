@@ -19,6 +19,7 @@ package middleware
 
 import (
 	"net/http"
+	"res-cms-go/internal/config"
 	"res-cms-go/internal/session"
 
 	"github.com/google/uuid"
@@ -77,6 +78,106 @@ func AdminAuth(next http.Handler) http.Handler {
 		session, ok := store.Get(sess.ID)
 		if !ok || !session.IsAdmin {
 			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+
+		// Add user info to request context
+		ctx := WithUser(r.Context(), session)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// APIAuth middleware checks if user is authenticated and returns JSON on failure
+func APIAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Check for bridge token
+		bridgeKey := config.Get().BridgeKey
+		if bridgeKey != "" && r.Header.Get("X-ResCMS-Bridge") == bridgeKey {
+			// Add system user info to request context
+			systemSession := &session.Session{
+				Username: "system",
+				IsAdmin:  true,
+			}
+			ctx := WithUser(r.Context(), systemSession)
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		}
+
+		// Get session cookie
+		cookie, err := r.Cookie("rescms_session")
+		if err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte(`{"error": "unauthorized"}`))
+			return
+		}
+
+		// Decode session
+		store := session.Get()
+		sess, err := store.Decode(cookie.Value)
+		if err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte(`{"error": "invalid session"}`))
+			return
+		}
+
+		// Get session from store
+		session, ok := store.Get(sess.ID)
+		if !ok {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte(`{"error": "session expired"}`))
+			return
+		}
+
+		// Add user info to request context
+		ctx := WithUser(r.Context(), session)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// AdminAPIAuth middleware checks if user is admin and returns JSON on failure
+func AdminAPIAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Check for bridge token
+		bridgeKey := config.Get().BridgeKey
+		if bridgeKey != "" && r.Header.Get("X-ResCMS-Bridge") == bridgeKey {
+			// Add system user info to request context
+			systemSession := &session.Session{
+				Username: "system",
+				IsAdmin:  true,
+			}
+			ctx := WithUser(r.Context(), systemSession)
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		}
+
+		// Get session cookie
+		cookie, err := r.Cookie("rescms_session")
+		if err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte(`{"error": "unauthorized"}`))
+			return
+		}
+
+		// Decode session
+		store := session.Get()
+		sess, err := store.Decode(cookie.Value)
+		if err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte(`{"error": "invalid session"}`))
+			return
+		}
+
+		// Get session from store
+		session, ok := store.Get(sess.ID)
+		if !ok || !session.IsAdmin {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusForbidden)
+			w.Write([]byte(`{"error": "forbidden"}`))
 			return
 		}
 
