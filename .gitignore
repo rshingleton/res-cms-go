@@ -1,7 +1,7 @@
 # ResCMS Git Ignore
-res-cms.db
-res-cms.db-shm
-res-cms.db-wal
+*.db
+*.db-shm
+*.db-wal
 scratch/
 public/uploads/*
 !public/uploads/.gitkeep
@@ -9,3 +9,12 @@ tmp/
 .DS_Store
 *.log
 bin/
+
+# Binaries
+/res-cms
+/migrate-categories
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib

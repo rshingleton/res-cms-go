@@ -23,6 +23,9 @@ All notable changes to this project will be documented in this file.
 - **Pixel Theme Timestamp Bug**: Fixed a literal "JAN" string in the Pixel Standard theme's date format that hardcoded all months to January.
 - **Monaco Editor Stability**: Finalized the "nuclear" flexbox layout fixes to prevent the editor from collapsing to 1px height.
 
+### Housekeeping
+- **Repository Hygiene**: Updated `.gitignore` to exclude `*.db`, SQLite journal files, and binary build artifacts (including the `res-cms` executable).
+
 ## [2.1.0] - 2026-04-26 (Editor Stability & Monaco Fixes)
 
 ### Added
