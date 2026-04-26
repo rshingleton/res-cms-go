@@ -1,20 +1,21 @@
 # ResCMS Go Handoff
 
-## Project Status: STABLE (v2.1.0)
+## Project Status: STABLE (v2.2.0)
 
 ResCMS Go has been fully migrated to a Go backend and stabilized for production editorial use. The system features a robust, unified "Super Editor" and a modular theme engine.
 
 ## 🛠 Technical Stack
 - **Backend**: Go 1.22+ (using standard `http.ServeMux` with path values).
 - **Database**: SQLite (`rescms.db`).
-- **Editor**: Quill with custom Image Resize and Server Upload handlers.
-- **Frontend**: Alpine.js (with Collapse plugin) for reactivity, Tailwind CSS for Admin, Axentix for Themes.
+- **Editor**: Monaco (for code), Quill (for content).
+- **Frontend Logic**: Alpine.js (with Collapse plugin) for reactivity.
+- **Styling**: Axentix CSS (Standardized for both Admin and Themes).
 - **Theme Engine**: Dynamic template loader with automated CSS/JS/HTML injection.
 
 ## 🔑 Key Features & Operations
 - **Admin Dashboard**: Accessible at `/manage`.
 - **Super Editor** (`/manage/editor`):
-    - **Note: We are still actively working on refining the theme editor experience.**
+    - **Fully Stabilized**: Monaco editor now correctly expands to fill available space across all views.
     - Edit files from any installed theme via the unified sidebar library.
     - Manage global site injectables (Header JS, Custom CSS, etc.) with automated `<script>` and `<style>` wrapping.
     - Enable/Disable global customizations instantly via UI toggles.

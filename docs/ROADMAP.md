@@ -18,7 +18,7 @@
     - [x] **Cross-Theme Selection**: Browse and edit files from any theme in one view.
     - [x] **Global Injections**: Manage custom CSS, JS, and HTML with auto-wrapping.
     - [x] **Enable/Disable Toggles**: Instantly control injection visibility via database flags.
-    - [x] **Monaco-based**: Full-screen code editor with persistent toolbar.
+    - [x] **Monaco-based**: Full-screen code editor with persistent toolbar (v2.2.0 Stabilized).
 
 ## Phase 3: Media & Assets (In Progress)
 - [ ] Dedicated Media Library in the admin panel.

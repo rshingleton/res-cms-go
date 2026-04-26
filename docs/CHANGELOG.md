@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2026-04-26 (Editor Stability & Monaco Fixes)
+
+### Added
+- **Unified Super Editor Stabilized**:
+    - Resolved critical rendering issues where the Monaco editor would collapse to 1px height/width.
+    - Standardized layout using hardcoded flex properties and `min-height: 0` to bypass framework conflicts.
+    - Integrated Alpine.js reactive state for file saving and toggle status.
+    - Implemented `Ctrl+S` keybind bridge between Monaco and Alpine.js via Custom Events.
+    - Fixed theme file loading by resolving Go template scoping issues.
+- **Improved Sidebar UX**:
+    - Standardized active selection styles for consistent readability (blue background, white text).
+    - Added file-type specific icons (JS, CSS, HTML) to the theme library browser.
+    - Refactored toggle switches for better text visibility.
+
 ## [2.0.0] - 2026-04-25 (Go Migration & Stability)
 
 ### Added
