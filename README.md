@@ -9,8 +9,8 @@ ResCMS Go is a powerful, lightweight, and highly configurable Content Management
 - **Unified Editorial Experience**: Standardized on a customized **Quill** editor for both Articles and Pages.
     - **Visual Image Resizing**: Professional resizing handles and display indicators.
     - **Optimized Media**: Images are uploaded to the server as files, avoiding database bloat from Base64.
-- **Reactive Admin UI**: A fully-featured administrative dashboard built with Alpine.js and Tailwind CSS for a seamless management experience.
-- **Axentix Integration**: Public themes are built on the Axentix CSS framework, providing a component-based, stable layout engine.
+- **Reactive Admin UI**: A fully-featured administrative dashboard built with Alpine.js and Axentix for a seamless management experience.
+- **Axentix Integration**: The entire application (Admin & Public Themes) is built on the Axentix CSS framework, providing a component-based, stable layout engine.
 - **Theme Hot Reloading**: Instant feedback for theme developers—see changes to templates and partials without restarting the server.
 - **API-First Architecture**: Built-in JSON APIs for posts, categories, tags, and comments, enabling decoupled frontend implementations.
 - **Multiple Built-in Themes**:
@@ -22,7 +22,7 @@ ResCMS Go is a powerful, lightweight, and highly configurable Content Management
 - **Backend**: Go (Golang) 1.22+
 - **Database**: SQLite (via GORM)
 - **Frontend Logic**: Alpine.js
-- **CSS Frameworks**: Axentix (Public Themes), Tailwind CSS (Admin Dashboard)
+- **CSS Frameworks**: Axentix (Unified for Admin and Themes)
 - **Rich Text**: Quill with Custom Image Resize and Server Upload adapters.
 
 ## 📦 Installation
