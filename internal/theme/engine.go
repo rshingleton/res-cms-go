@@ -18,9 +18,9 @@ type ThemeConfig struct {
 	Author      string `json:"author"`
 	Description string `json:"description"`
 	Config      struct {
-		Colors     map[string]string `json:"colors"`
-		Typography map[string]string `json:"typography"`
-		BorderWidth string           `json:"border_width"`
+		Colors      map[string]string `json:"colors"`
+		Typography  map[string]string `json:"typography"`
+		BorderWidth string            `json:"border_width"`
 	} `json:"config"`
 }
 
@@ -77,7 +77,7 @@ func (e *Engine) LoadTheme(name string, funcs template.FuncMap) error {
 
 	// Load layouts
 	layoutsDir := filepath.Join(themeDir, "layouts")
-	
+
 	// Check if a master layout exists
 	masterPath := filepath.Join(layoutsDir, "main.html")
 	if _, err := os.Stat(masterPath); err == nil {
@@ -92,24 +92,24 @@ func (e *Engine) LoadTheme(name string, funcs template.FuncMap) error {
 		if err != nil || info.IsDir() || !strings.HasSuffix(path, ".html") {
 			return err
 		}
-		
+
 		pageName := filepath.Base(path)
 		if pageName == "main.html" {
 			return nil // Already handled
 		}
 
 		content, _ := os.ReadFile(path)
-		
+
 		t, err := base.Clone()
 		if err != nil {
 			return err
 		}
-		
+
 		_, err = t.New(pageName).Parse(string(content))
 		if err != nil {
 			return err
 		}
-		
+
 		e.Templates[pageName] = t
 		return nil
 	})

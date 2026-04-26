@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"html/template"
 	"log"
@@ -11,10 +12,9 @@ import (
 	"res-cms-go/internal/db"
 	"res-cms-go/internal/handlers"
 	"res-cms-go/internal/middleware"
+	"res-cms-go/internal/models"
 	"res-cms-go/internal/session"
 	"res-cms-go/internal/theme"
-	"res-cms-go/internal/models"
-	"encoding/json"
 	"strings"
 )
 
@@ -70,14 +70,14 @@ func main() {
 
 	// Initialize Theme Engine
 	handlers.ThemeEngine = theme.NewEngine("themes")
-	
+
 	// Get active theme from settings or default
 	activeTheme := "classic"
 	db.DB.Model(&models.SiteSetting{}).Where("name = ?", "active_theme").Select("value").Scan(&activeTheme)
 	if activeTheme == "" {
 		activeTheme = "classic"
 	}
-	
+
 	err = handlers.ThemeEngine.LoadTheme(activeTheme, template.FuncMap{
 		"formatDate": func(t interface{}) string { return "2024-01-01" },
 		"json": func(v interface{}) string {
@@ -88,7 +88,7 @@ func main() {
 			b, _ := json.Marshal(v)
 			return template.JS(b)
 		},
-		"toUpper": func(s string) string { return strings.ToUpper(s) },
+		"toUpper":  func(s string) string { return strings.ToUpper(s) },
 		"safeHTML": func(s string) template.HTML { return template.HTML(s) },
 	})
 	if err != nil {
@@ -108,7 +108,6 @@ func main() {
 	// Serve themes assets
 	mux.Handle("/themes/", http.StripPrefix("/themes/", http.FileServer(http.Dir("themes"))))
 
-
 	// Public routes
 	mux.HandleFunc("/", handlers.IndexHandler)
 	mux.HandleFunc("/page/{slug}", handlers.PageHandler)
@@ -120,13 +119,13 @@ func main() {
 	mux.HandleFunc("/access/logout", handlers.LogoutHandler)
 	mux.HandleFunc("/profile", handlers.ProfileHandler)
 	mux.HandleFunc("/entries/account/{account}", handlers.EntriesByAccountHandler)
-	mux.HandleFunc("/entries/category/{category}", handlers.PostsByCategoryHandler)
+	mux.HandleFunc("/entries/page/{page}", handlers.PostsByPageHandler)
 	mux.HandleFunc("/entries/tag/{tag}", handlers.PostsByTagHandler)
 
 	// API Routes (/api/v1/ prefix)
 	mux.HandleFunc("/api/v1/posts", handlers.APIListPostsHandler)
 	mux.HandleFunc("/api/v1/posts/", handlers.APIGetPostHandler)
-	mux.HandleFunc("/api/v1/categories", handlers.APIListCategoriesHandler)
+	mux.HandleFunc("/api/v1/pages", handlers.APIListPagesHandler)
 	mux.HandleFunc("/api/v1/tags", handlers.APIListTagsHandler)
 	mux.HandleFunc("/api/v1/comments/submit", handlers.APISubmitCommentHandler)
 	mux.HandleFunc("/api/v1/contact", handlers.APIContactHandler)
@@ -156,11 +155,11 @@ func main() {
 	adminMux.HandleFunc("/manage/entries/delete/{id}", handlers.AdminDeletePostHandler)
 	adminMux.HandleFunc("/manage/entries/publish/{id}", handlers.AdminPublishPostHandler)
 	adminMux.HandleFunc("/manage/entries/draft/{id}", handlers.AdminDraftPostHandler)
-	adminMux.HandleFunc("GET /manage/categories", handlers.AdminListCategoriesHandler)
-	adminMux.HandleFunc("POST /manage/categories", handlers.AdminAddCategoryHandler)
-	adminMux.HandleFunc("/manage/categories/edit/{id}", handlers.AdminEditCategoryFormHandler)
-	adminMux.HandleFunc("/manage/categories/update/{id}", handlers.AdminUpdateCategoryHandler)
-	adminMux.HandleFunc("/manage/categories/delete/{id}", handlers.AdminDeleteCategoryHandler)
+	adminMux.HandleFunc("GET /manage/pages", handlers.AdminListPagesHandler)
+	adminMux.HandleFunc("POST /manage/pages", handlers.AdminAddPageHandler)
+	adminMux.HandleFunc("/manage/pages/edit/{id}", handlers.AdminEditPageFormHandler)
+	adminMux.HandleFunc("/manage/pages/update/{id}", handlers.AdminUpdatePageHandler)
+	adminMux.HandleFunc("/manage/pages/delete/{id}", handlers.AdminDeletePageHandler)
 	adminMux.HandleFunc("/manage/comments", handlers.AdminListCommentsHandler)
 	adminMux.HandleFunc("/manage/comments/approve/{id}", handlers.AdminApproveCommentHandler)
 	adminMux.HandleFunc("/manage/comments/unapprove/{id}", handlers.AdminUnapproveCommentHandler)
@@ -172,8 +171,8 @@ func main() {
 	adminMux.HandleFunc("/manage/accounts/delete/{id}", handlers.AdminDeleteUserHandler)
 	adminMux.HandleFunc("/manage/configs", handlers.AdminSettingsHandler)
 	adminMux.HandleFunc("/manage/themes", handlers.AdminListThemesHandler)
-	adminMux.HandleFunc("/manage/themes/edit/{theme}", handlers.AdminThemeEditorHandler)
-	adminMux.HandleFunc("/manage/themes/save", handlers.AdminThemeSaveFileHandler)
+	adminMux.HandleFunc("/manage/editor", handlers.AdminUnifiedEditorHandler)
+	adminMux.HandleFunc("/manage/editor/save", handlers.AdminUnifiedSaveHandler)
 	adminMux.HandleFunc("/manage/themes/copy/{theme}", handlers.AdminThemeCopyHandler)
 	adminMux.HandleFunc("/manage/themes/upload", handlers.AdminUploadThemeHandler)
 	adminMux.HandleFunc("/manage/themes/activate/{name}", handlers.AdminActivateThemeHandler)
@@ -195,7 +194,7 @@ func main() {
 	log.Println("  [Public] /access/login")
 	log.Println("  [Admin]  /manage")
 	log.Println("  [Admin]  /manage/entries")
-	log.Println("  [Admin]  /manage/categories")
+	log.Println("  [Admin]  /manage/pages")
 	log.Println("  [Admin]  /manage/accounts")
 
 	if err := http.ListenAndServe(cfg.Listen, mux); err != nil {
@@ -215,9 +214,13 @@ func loadTemplates() error {
 			b, _ := json.Marshal(v)
 			return template.JS(b)
 		},
-		"toUpper": func(s string) string { return strings.ToUpper(s) },
-		"safeHTML": func(s string) template.HTML { return template.HTML(s) },
-		"hasSuffix": func(s, suffix string) bool { return strings.HasSuffix(s, suffix) },
+		"toUpper":    func(s string) string { return strings.ToUpper(s) },
+		"safeHTML":   func(s string) template.HTML { return template.HTML(s) },
+		"hasSuffix":  func(s, suffix string) bool { return strings.HasSuffix(s, suffix) },
+		"hasPrefix":  func(s, prefix string) bool { return strings.HasPrefix(s, prefix) },
+		"trimPrefix": func(s, prefix string) string { return strings.TrimPrefix(s, prefix) },
+		"replace":    func(s, old, new string) string { return strings.ReplaceAll(s, old, new) },
+		"title":      func(s string) string { return strings.Title(s) },
 	})
 
 	// Load Admin Layout

@@ -1,7 +1,7 @@
 # ResCMS Theme Specification (Standard Theme Template - STT)
 
 ## 1. Overview
-The ResCMS Theme Engine allows for modular, swappable public-facing "skins." Themes are stored in the `/themes` directory and are managed via the Admin Dashboard.
+The ResCMS Theme Engine allows for modular, swappable public-facing "skins." Themes are stored in the `/themes` directory and are managed via the Admin Dashboard's Super Editor.
 
 ## 2. Directory Structure
 A valid theme must follow this structure:
@@ -23,7 +23,15 @@ A valid theme must follow this structure:
     └── img/
 ```
 
-## 3. Theme Manifest (`theme.json`)
+## 3. Global Injections
+The CMS automatically provides several variables for global customization. Themes must include these variables in their master layout (usually `layouts/main.html`) to support user customizations.
+
+- **`{{.res_custom_css_style}}`**: Injected into the `<head>`. Automatically wrapped in `<style>` tags.
+- **`{{.res_custom_js_script}}`**: Injected into the `<head>` (or before `</body>`). Automatically wrapped in `<script>` tags.
+- **`{{.res_custom_header_html_parsed}}`**: Raw HTML injected at the end of the `<head>`.
+- **`{{.res_custom_footer_html_parsed}}`**: Raw HTML injected before the closing `</body>` tag.
+
+## 4. Manifest (`theme.json`)
 The manifest defines the theme's identity and visual tokens.
 ```json
 {
@@ -43,21 +51,31 @@ The manifest defines the theme's identity and visual tokens.
 }
 ```
 
-## 4. UI Standards (Pixel Art Engine)
-For Pixel Art themes, the following standards apply:
-- **Scaling**: All images and UI elements must use `image-rendering: pixelated;`.
-- **Borders**: "Chunky" borders of 2px or 4px are preferred.
-- **Typography**: Aliases for 8-bit fonts (e.g., "Press Start 2P") must be provided.
-- **Grid**: Use CSS Grid for the layout to maintain "fixed-grid" alignment while being responsive.
-
 ## 5. Master Layout Logic
-Themes can define a `layouts/main.html` which acts as the wrapper. Pages like `index.html` should define a `content` block:
+Themes should define a master layout wrapper. Individual pages define a `content` block which is then rendered by the master layout.
+
+Example `index.html`:
 ```html
 {{define "content"}}
-  <!-- Page Content -->
+  <div class="posts">...</div>
 {{end}}
 ```
-The master layout should then include:
+
+Example `layouts/main.html`:
 ```html
-{{block "content" .}}{{end}}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{.res_blog_name}}</title>
+  {{.res_custom_css_style}}
+  {{.res_custom_header_html_parsed}}
+</head>
+<body>
+  {{template "partials/header.html" .}}
+  {{block "content" .}}{{end}}
+  {{template "partials/footer.html" .}}
+  {{.res_custom_js_script}}
+  {{.res_custom_footer_html_parsed}}
+</body>
+</html>
 ```

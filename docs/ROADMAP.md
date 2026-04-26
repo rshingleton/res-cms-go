@@ -9,17 +9,18 @@
 - [x] Build custom server-side Image Upload adapter
 - [x] Standardize editorial styling across all themes (Classic & Pixel)
 
-## Phase 2: Theme Management (In Progress)
+## Phase 2: Theme Management & Customization (Completed)
 - [x] **Theme Operations**:
-    - [x] **Copy Theme**: Duplicate any installed theme from the UI.
-    - [ ] **Export Theme**: Package a theme as a ZIP for download.
-    - [ ] **Upload Theme**: Drag-and-drop ZIP upload.
-- [ ] **Integrated Theme Editor**:
-    - Full-screen code editor (Monaco-based).
-    - Support for HTML, CSS, JS, and JSON.
-    - Recursive file explorer for the `themes/` directory.
+    - [x] **Duplicate Theme**: Rename and copy any installed theme via UI modal.
+    - [x] **Export Theme**: Package a theme as a ZIP for download.
+    - [x] **Upload Theme**: Drag-and-drop ZIP upload.
+- [x] **Unified Super Editor**:
+    - [x] **Cross-Theme Selection**: Browse and edit files from any theme in one view.
+    - [x] **Global Injections**: Manage custom CSS, JS, and HTML with auto-wrapping.
+    - [x] **Enable/Disable Toggles**: Instantly control injection visibility via database flags.
+    - [x] **Monaco-based**: Full-screen code editor with persistent toolbar.
 
-## Phase 3: Media & Assets
+## Phase 3: Media & Assets (In Progress)
 - [ ] Dedicated Media Library in the admin panel.
 - [ ] Automatic image optimization on upload (WebP conversion).
 - [ ] Drag-and-drop image placement from library to editor.

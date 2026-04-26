@@ -34,16 +34,16 @@ func APIListPostsHandler(w http.ResponseWriter, r *http.Request) {
 	perPage := 10
 	offset := (page - 1) * perPage
 
-	category := r.URL.Query().Get("category")
+	pageSlug := r.URL.Query().Get("page")
 	tag := r.URL.Query().Get("tag")
 	search := r.URL.Query().Get("search")
 
 	query := db.DB.Model(&models.Entry{}).Where("LOWER(status) = ?", "published")
 
-	if category != "" {
-		query = query.Joins("JOIN entry_categories ON entries.id = entry_categories.entry_id").
-			Joins("JOIN categories ON categories.id = entry_categories.category_id").
-			Where("categories.slug = ?", category)
+	if pageSlug != "" {
+		query = query.Joins("JOIN entry_pages ON entries.id = entry_pages.entry_id").
+			Joins("JOIN pages ON pages.id = entry_pages.page_id").
+			Where("pages.slug = ?", pageSlug)
 	}
 
 	if tag != "" {
@@ -95,11 +95,11 @@ func APIGetPostHandler(w http.ResponseWriter, r *http.Request) {
 	JSONResponse(w, http.StatusOK, entry)
 }
 
-// APIListCategoriesHandler returns all categories
-func APIListCategoriesHandler(w http.ResponseWriter, r *http.Request) {
-	var categories []models.Category
-	db.DB.Order("name").Find(&categories)
-	JSONResponse(w, http.StatusOK, categories)
+// APIListPagesHandler returns all pages
+func APIListPagesHandler(w http.ResponseWriter, r *http.Request) {
+	var pages []models.Page
+	db.DB.Order("title").Find(&pages)
+	JSONResponse(w, http.StatusOK, pages)
 }
 
 // APIListTagsHandler returns all tags
@@ -225,13 +225,13 @@ func APIAdminListPostsHandler(w http.ResponseWriter, r *http.Request) {
 // APIAdminSavePostHandler creates or updates a post
 func APIAdminSavePostHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		ID         uint     `json:"id"`
-		Title      string   `json:"title"`
-		Slug       string   `json:"slug"`
-		Content    string   `json:"content"`
-		Status     string   `json:"status"`
-		Categories []uint   `json:"categories"`
-		Tags       []uint   `json:"tags"`
+		ID      uint   `json:"id"`
+		Title   string `json:"title"`
+		Slug    string `json:"slug"`
+		Content string `json:"content"`
+		Status  string `json:"status"`
+		Pages   []uint `json:"pages"`
+		Tags    []uint `json:"tags"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -277,11 +277,11 @@ func APIAdminSavePostHandler(w http.ResponseWriter, r *http.Request) {
 	// Update associations using input.ID
 	var entry models.Entry
 	db.DB.First(&entry, input.ID)
-	
+
 	db.DB.Model(&entry).Association("Pages").Clear()
-	if len(input.Categories) > 0 {
+	if len(input.Pages) > 0 {
 		var pages []models.Page
-		for _, pid := range input.Categories {
+		for _, pid := range input.Pages {
 			pages = append(pages, models.Page{ID: pid})
 		}
 		db.DB.Model(&entry).Association("Pages").Append(&pages)

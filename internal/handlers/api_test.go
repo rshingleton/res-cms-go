@@ -25,7 +25,7 @@ func setupHandlerTestDB(t *testing.T) func() {
 	}
 
 	// Migrate schemas
-	err = db.DB.AutoMigrate(&models.User{}, &models.Entry{}, &models.Category{}, &models.Tag{}, &models.Comment{}, &models.SiteSetting{})
+	err = db.DB.AutoMigrate(&models.User{}, &models.Entry{}, &models.Page{}, &models.Tag{}, &models.Comment{}, &models.SiteSetting{})
 	if err != nil {
 		t.Fatalf("failed to migrate: %v", err)
 	}
@@ -131,25 +131,25 @@ func TestAPIAdminSavePostHandler(t *testing.T) {
 	}
 }
 
-func TestAPIListCategoriesHandler(t *testing.T) {
+func TestAPIListPagesHandler(t *testing.T) {
 	cleanup := setupHandlerTestDB(t)
 	defer cleanup()
 
-	db.DB.Create(&models.Category{Name: "Cat 1", Slug: "cat-1"})
+	db.DB.Create(&models.Page{Title: "Cat 1", Slug: "cat-1"})
 
-	req, _ := http.NewRequest("GET", "/api/v1/categories", nil)
+	req, _ := http.NewRequest("GET", "/api/v1/pages", nil)
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(APIListCategoriesHandler)
+	handler := http.HandlerFunc(APIListPagesHandler)
 	handler.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusOK {
 		t.Errorf("expected 200, got %d", rr.Code)
 	}
 
-	var cats []models.Category
-	json.NewDecoder(rr.Body).Decode(&cats)
-	if len(cats) != 1 {
-		t.Errorf("expected 1 category, got %d", len(cats))
+	var pages []models.Page
+	json.NewDecoder(rr.Body).Decode(&pages)
+	if len(pages) != 1 {
+		t.Errorf("expected 1 page, got %d", len(pages))
 	}
 }
 

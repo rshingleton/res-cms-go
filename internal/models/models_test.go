@@ -16,7 +16,7 @@ func setupTestDB(t *testing.T) (*gorm.DB, func()) {
 	}
 
 	// Migrate schemas
-	err = db.AutoMigrate(&User{}, &Entry{}, &Category{}, &Tag{}, &Comment{}, &SiteSetting{})
+	err = db.AutoMigrate(&User{}, &Entry{}, &Page{}, &Tag{}, &Comment{}, &SiteSetting{})
 	if err != nil {
 		t.Fatalf("failed to migrate: %v", err)
 	}
@@ -46,13 +46,13 @@ func TestEntryCreation(t *testing.T) {
 		t.Fatalf("failed to create user: %v", err)
 	}
 
-	// Create categories
-	category := Category{
-		Name: "Tech",
-		Slug: "tech",
+	// Create pages
+	page := Page{
+		Title: "Tech",
+		Slug:  "tech",
 	}
-	if err := db.Create(&category).Error; err != nil {
-		t.Fatalf("failed to create category: %v", err)
+	if err := db.Create(&page).Error; err != nil {
+		t.Fatalf("failed to create page: %v", err)
 	}
 
 	// Create tags
@@ -71,7 +71,7 @@ func TestEntryCreation(t *testing.T) {
 		Slug:       "hello-world",
 		Content:    "This is a test post.",
 		Status:     "published",
-		Categories: []Category{category},
+		Pages:      []Page{page},
 		Tags:       []Tag{tag},
 	}
 
@@ -81,7 +81,7 @@ func TestEntryCreation(t *testing.T) {
 
 	// Verify entry exists and associations work
 	var fetchedEntry Entry
-	err := db.Preload("Author").Preload("Categories").Preload("Tags").First(&fetchedEntry, entry.ID).Error
+	err := db.Preload("Author").Preload("Pages").Preload("Tags").First(&fetchedEntry, entry.ID).Error
 	if err != nil {
 		t.Fatalf("failed to fetch entry: %v", err)
 	}
@@ -90,8 +90,8 @@ func TestEntryCreation(t *testing.T) {
 		t.Errorf("expected title Hello World, got %s", fetchedEntry.EntryTitle)
 	}
 
-	if len(fetchedEntry.Categories) != 1 || fetchedEntry.Categories[0].Name != "Tech" {
-		t.Errorf("category association failed")
+	if len(fetchedEntry.Pages) != 1 || fetchedEntry.Pages[0].Title != "Tech" {
+		t.Errorf("page association failed")
 	}
 
 	if len(fetchedEntry.Tags) != 1 || fetchedEntry.Tags[0].Name != "Go" {

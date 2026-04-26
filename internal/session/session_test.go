@@ -58,7 +58,7 @@ func TestSessionExpiration(t *testing.T) {
 	store := New(secrets, duration)
 
 	sess, _ := store.Create(1, "testuser", false)
-	
+
 	// Wait for expiration
 	time.Sleep(2 * time.Millisecond)
 

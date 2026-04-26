@@ -1,57 +1,50 @@
 # ResCMS Go Architecture
 
 ## Overview
-ResCMS is a modern, Go-based Content Management System. It features an API-driven architecture, a modular theme engine, and a reactive admin dashboard.
+ResCMS is a modern, Go-based Content Management System. It features an API-driven architecture, a modular theme engine, and a reactive admin dashboard with a unified code editor.
 
 ## Technology Stack
 - **Backend**: Go (Golang)
 - **Database**: SQLite (via GORM)
-- **Frontend Logic**: Alpine.js
-- **Styling**: Tailwind CSS (for Admin/Classic) & Axentix CSS (for Pixel Theme)
+- **Frontend Logic**: Alpine.js (with Collapse plugin)
+- **Styling**: Tailwind CSS (for Admin) & Axentix CSS (for Themes)
 - **Templates**: `html/template` (Go Standard Library)
-- **Editor**: Quill with custom modular extensions.
+- **Editor**: Monaco (for code), Quill (for content)
 
 ## Core Components
 
 ### 1. Theme Engine (`internal/theme`)
-The Theme Engine handles the modular delivery of the public-facing UI.
-- **Location**: `/themes/[theme-name]`
-- **Manifest**: `theme.json` defines metadata and color tokens.
-- **Assets**: Themes manage their own CSS, JS, and Images.
-- **Dynamic Loading**: Themes are loaded and validated at runtime, allowing for instant swaps and zip-based installation.
+The Theme Engine handles the modular delivery of the public-facing UI and automated customization injections.
+- **Manifest**: `theme.json` defines metadata and visual tokens.
+- **Dynamic Injections**: Automatically wraps and injects raw CSS/JS from site settings into theme layouts.
+- **Hot-Reload**: Themes are reloaded in development mode for instant feedback.
 
-### 2. Admin UI (`internal/ui/admin`)
-The administrative interface is decoupled from user themes.
-- **Location**: `internal/ui/admin`
-- **Reactive Design**: Built with Alpine.js, ensuring a seamless, SPA-like experience within a server-rendered shell.
-- **Theme Editor**: Located at `/manage/theme/editor`, allows direct modification of theme source code.
+### 2. Admin Super Editor (`/manage/editor`)
+A centralized hub for all site-wide code modifications.
+- **Unified Selection**: Single-page interface to browse and edit all installed themes.
+- **Global Customization**: Manage injectable CSS/JS/HTML with enable/disable toggles stored in the database.
+- **Automated Tagging**: Backend logic ensures raw inputs are correctly wrapped in `<style>` or `<script>` tags before delivery.
 
 ### 3. API Handlers (`internal/handlers`)
-- **API v2**: JSON endpoints for posts, pages, and tags.
-- **Admin Handlers**: Secure routes for content management, user administration, and theme control.
-- **Root Handlers**: Dynamic template rendering that bridges the Theme Engine and the Go backend.
+- **Admin Unified Handlers**: Single POST endpoints for managing filesystem (themes) and database (settings) updates.
+- **Root Render Engine**: Optimized `renderTemplate` function that maps global settings to theme variables (`res_` prefix).
 
 ### 4. Database Models (`internal/models`)
-- **Entry**: Blog posts.
-- **Page**: Standalone pages and categories (taxonomies).
-- **User**: Authentication and role-based access.
-- **Comment**: Interactive feedback system linked to Entries.
-- **Tag**: Metadata for Article discovery.
+- **SiteSetting**: Stores all configuration and global customizations (CSS, JS, Header/Footer HTML).
 
 ## Project Structure
 ```text
 res-cms-go/
 ├── cmd/res-cms/          # Application entry point
 ├── internal/
-│   ├── db/               # GORM initialization
-│   ├── handlers/         # API and Web handlers
-│   ├── middleware/       # Auth and Flash logic
-│   ├── models/           # Data structures (Entry, Page, User, etc.)
-│   ├── session/          # Secure session management
-│   ├── theme/            # Theme Engine core
-│   └── ui/               # System UI (Admin Templates)
-├── themes/               # Modular public skins
-├── public/               # Static assets & User uploads
-├── docs/                 # Documentation
-└── res-cms.db            # SQLite Database
+│   ├── db/               # Database initialization & Seeding
+│   ├── handlers/         # Unified Admin and Public handlers
+│   ├── middleware/       # Auth, Flash, and Context logic
+│   ├── models/           # Data structures
+│   ├── theme/            # Core Engine logic
+│   └── ui/               # Admin UI Templates
+├── themes/               # Theme Library (classic, pixel-standard)
+├── public/               # Uploads and Static assets
+├── docs/                 # Documentation & Specification
+└── rescms.yml            # Application Configuration
 ```

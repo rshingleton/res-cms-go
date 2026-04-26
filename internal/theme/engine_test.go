@@ -61,8 +61,12 @@ func TestThemeEngine_ValidateTheme(t *testing.T) {
 	// Add missing files
 	os.WriteFile(filepath.Join(themeDir, "theme.json"), []byte("{}"), 0644)
 	os.MkdirAll(filepath.Join(themeDir, "layouts"), 0755)
+	os.WriteFile(filepath.Join(themeDir, "layouts", "main.html"), []byte(""), 0644)
 	os.WriteFile(filepath.Join(themeDir, "layouts", "index.html"), []byte(""), 0644)
 	os.WriteFile(filepath.Join(themeDir, "layouts", "post.html"), []byte(""), 0644)
+	os.WriteFile(filepath.Join(themeDir, "layouts", "page.html"), []byte(""), 0644)
+	os.WriteFile(filepath.Join(themeDir, "layouts", "login.html"), []byte(""), 0644)
+	os.WriteFile(filepath.Join(themeDir, "layouts", "profile.html"), []byte(""), 0644)
 
 	err = engine.ValidateTheme(themeDir)
 	if err != nil {

@@ -14,7 +14,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <!-- Alpine.js -->
+    <!-- Alpine.js Plugins -->
+    <script defer src="https://unpkg.com/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+    <!-- Alpine.js Core -->
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
     <style>
@@ -63,7 +65,7 @@
             <a href="/manage/entries" class="sidenav-link hover-bg-slate-light-5 text-slate-dark-1 {{if eq .ActiveTab "posts"}}active{{end}}">
                 <i class="fas fa-file-alt mr-3 font-s2"></i> Articles
             </a>
-            <a href="/manage/categories" class="sidenav-link hover-bg-slate-light-5 text-slate-dark-1 {{if eq .ActiveTab "categories"}}active{{end}}">
+            <a href="/manage/pages" class="sidenav-link hover-bg-slate-light-5 text-slate-dark-1 {{if eq .ActiveTab "categories"}}active{{end}}">
                 <i class="fas fa-file mr-3 font-s2"></i> Pages
             </a>
             <a href="/manage/comments" class="sidenav-link hover-bg-slate-light-5 text-slate-dark-1 {{if eq .ActiveTab "comments"}}active{{end}}">
@@ -131,5 +133,16 @@
             // Sidenav is auto-initialized by data-ax="sidenav"
         });
     </script>
+
+    <!-- Monaco Editor Scripts -->
+    {{if eq .ActiveTab "themes"}}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+    <script>
+        if (window.require && !window.require.config_applied) {
+            require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
+            window.require.config_applied = true;
+        }
+    </script>
+    {{end}}
 </body>
 </html>

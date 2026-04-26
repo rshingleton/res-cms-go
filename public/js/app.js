@@ -7,9 +7,9 @@ document.addEventListener('alpine:init', () => {
         currentTab: localStorage.getItem('res_cms_tab') || 'home',
         
         async init() {
-            // Reset to home if filtering by category or tag
+            // Reset to home if filtering by page or tag
             const params = new URLSearchParams(window.location.search);
-            if (params.has('category') || params.has('tag')) {
+            if (params.has('page') || params.has('tag')) {
                 this.currentTab = 'home';
             }
             await this.fetchSession();

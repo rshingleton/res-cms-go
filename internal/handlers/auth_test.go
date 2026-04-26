@@ -180,6 +180,6 @@ func init() {
 	log.SetOutput(os.Stdout)
 }
 
-// We need a dummy renderTemplate for LoginFormHandler if we were to test it, 
+// We need a dummy renderTemplate for LoginFormHandler if we were to test it,
 // but LoginFormHandler renders HTML which is harder to test without template setup.
 // For now we focus on logic handlers.

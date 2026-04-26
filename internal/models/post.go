@@ -16,10 +16,10 @@ type Entry struct {
 	UpdatedAt  time.Time `json:"updated_at"`
 
 	// Associations
-	Author     User       `gorm:"foreignKey:AccountID" json:"author,omitempty"`
-	Pages      []Page     `gorm:"many2many:entry_pages;" json:"pages,omitempty"`
-	Tags       []Tag      `gorm:"many2many:entry_tags;" json:"tags,omitempty"`
-	Comments   []Comment  `gorm:"foreignKey:EntryID" json:"comments,omitempty"`
+	Author   User      `gorm:"foreignKey:AccountID" json:"author,omitempty"`
+	Pages    []Page    `gorm:"many2many:entry_pages;" json:"pages,omitempty"`
+	Tags     []Tag     `gorm:"many2many:entry_tags;" json:"tags,omitempty"`
+	Comments []Comment `gorm:"foreignKey:EntryID" json:"comments,omitempty"`
 }
 
 // TableName overrides the table name

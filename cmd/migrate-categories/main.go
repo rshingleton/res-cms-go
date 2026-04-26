@@ -3,20 +3,24 @@ package main
 import (
 	"log"
 
-	"res-cms/internal/config"
-	"res-cms/internal/db"
-	"res-cms/internal/models"
+	"res-cms-go/internal/config"
+	"res-cms-go/internal/db"
+	"res-cms-go/internal/models"
 )
 
 func main() {
-	cfg := config.LoadConfig()
-	db.Init(cfg.DatabaseURL)
+	cfg, err := config.Load("rescms.yml")
+	if err != nil {
+		log.Printf("Warning: Could not load config, using defaults: %v", err)
+		cfg = &config.Config{SQLiteDSN: "data/rescms.db"}
+	}
+	db.Init(cfg.SQLiteDSN, false)
 	database := db.GetDB()
 
 	log.Println("Starting Category -> Page migration...")
 
 	// 1. Auto-migrate new models
-	err := database.AutoMigrate(&models.Page{})
+	err = database.AutoMigrate(&models.Page{})
 	if err != nil {
 		log.Fatalf("Failed to auto-migrate Page model: %v", err)
 	}
@@ -39,23 +43,23 @@ func main() {
 
 	// 3. Migrate existing categories
 	type OldCategory struct {
-		ID       uint
-		Name     string
-		Slug     string
+		ID   uint
+		Name string
+		Slug string
 	}
 	var oldCategories []OldCategory
 	if database.Migrator().HasTable("categories") {
 		database.Table("categories").Find(&oldCategories)
-		
+
 		for _, cat := range oldCategories {
 			var page models.Page
 			if err := database.Where("slug = ?", cat.Slug).First(&page).Error; err != nil {
 				// Page doesn't exist, create it
 				newPage := models.Page{
-					ID:      cat.ID, // Preserve ID to keep many2many relationships if we migrate them directly
-					Title:   cat.Name,
-					Slug:    cat.Slug,
-					Content: "<h2>" + cat.Name + "</h2><p>Page automatically generated from category.</p>",
+					ID:       cat.ID, // Preserve ID to keep many2many relationships if we migrate them directly
+					Title:    cat.Name,
+					Slug:     cat.Slug,
+					Content:  "<h2>" + cat.Name + "</h2><p>Page automatically generated from category.</p>",
 					IsSystem: false,
 				}
 				database.Create(&newPage)

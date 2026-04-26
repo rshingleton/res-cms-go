@@ -1,74 +1,186 @@
 {{define "content"}}
-<div class="grix xs1 gutter-xs4" style="height: calc(100vh - 120px); overflow: hidden;">
-    <!-- Header -->
-    <div class="d-flex fx-row fx-space-between vcenter mb-2">
-        <div>
-            <h1 class="font-w900 font-s6 text-slate-900 mb-1">Theme Editor: <span class="text-blue">{{.ThemeName}}</span></h1>
-            <p class="text-grey font-s2 mb-0">Editing: <code class="text-blue-dark-2 font-w700">{{.SelectedFile}}</code></p>
-        </div>
-        <div class="d-flex g-gap-2">
-            <a href="/manage/themes" class="btn white text-slate-700 shadow-1 rounded-1 font-w700">
-                <i class="fas fa-times mr-2"></i> Close
-            </a>
-            <button id="save-button" class="btn blue rounded-1 shadow-1 font-w900">
-                <i class="fas fa-save mr-2"></i> Save File
-            </button>
-        </div>
-    </div>
+<div id="editor-app" x-data="{ 
+    saving: false, 
+    enabled: {{if .TargetEnabled}}true{{else}}false{{end}},
+    target: '{{.SelectedTarget}}',
+    targetType: '{{.TargetType}}',
+    
+    async performSave() {
+        if (!window.monacoEditorInstance) return;
+        
+        this.saving = true;
 
-    <div class="grix xs1 lg4 gutter-xs4 mt-2" style="height: 100%;">
-        <!-- File Explorer -->
+        try {
+            const formData = new FormData();
+            formData.append('target', this.target);
+            formData.append('content', window.monacoEditorInstance.getValue());
+            if (this.targetType === 'global') {
+                formData.append('enabled', this.enabled ? '1' : '0');
+            }
+
+            const res = await fetch('/manage/editor/save', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (res.ok) {
+                Alpine.store('app').notify('Changes saved successfully', 'success');
+            } else {
+                Alpine.store('app').notify('Failed to save changes', 'error');
+            }
+        } catch (err) {
+            console.error(err);
+            Alpine.store('app').notify('Error connecting to server', 'error');
+        } finally {
+            this.saving = false;
+        }
+    }
+}" @trigger-save.window="performSave()" class="grix xs1 gutter-xs4" style="height: calc(100vh - 120px); overflow: hidden;">
+    
+    <div class="grix xs1 lg4 gutter-xs4" style="height: 100%;">
+        <!-- Sidebar: Library -->
         <div class="col-xs1 col-lg1 h-100 overflow-y-auto pr-2">
-            <div class="card white shadow-1 rounded-1 p-0 h-100 border-all-1 border-slate-light-4">
+            <!-- Global Injections -->
+            <div class="card white shadow-1 rounded-1 p-0 mb-4 border-all-1 border-slate-light-4">
                 <div class="p-3 bg-slate-light-5 border-bottom-1 border-slate-light-4">
-                    <h3 class="font-w800 font-s1 uppercase text-slate-700 mb-0">Theme Files</h3>
+                    <h3 class="font-w800 font-s1 uppercase text-slate-700 mb-0 tracking-widest">Global Injections</h3>
                 </div>
-                <div class="p-2">
+                <div class="p-1">
                     <ul class="list-none p-0 m-0">
-                        {{range .Files}}
+                        {{range .Injectables}}
                         <li class="mb-1">
-                            <a href="?file={{.}}" 
-                               class="d-flex vcenter p-2 rounded-1 transition-all {{if eq . $.SelectedFile}}bg-blue-light-5 text-blue font-w700{{else}}text-slate-700 hover-bg-slate-light-5{{end}}"
+                            <a href="/manage/editor?target=global:{{.Key}}" 
+                               class="flex flex-row justify-between align-center p-2 rounded-1 transition-all {{if eq $.SelectedTarget (print "global:" .Key)}}blue font-w700 shadow-1{{else}}text-slate-700 hover-bg-slate-light-5{{end}}"
                                style="text-decoration: none; font-size: 0.85rem;">
-                                <i class="fas {{if or (hasSuffix . ".js") (hasSuffix . ".ts")}}fa-js text-yellow{{else if or (hasSuffix . ".css") (hasSuffix . ".scss")}}fa-css3 text-blue{{else if hasSuffix . ".html"}}fa-html5 text-orange{{else}}fa-file-code text-grey{{end}} mr-2"></i>
-                                <span class="truncate">{{.}}</span>
+                                <div class="flex align-center">
+                                    <i class="fas {{if eq .Type "css"}}fa-css3 text-blue{{else if eq .Type "js"}}fa-js text-yellow{{else}}fa-html5 text-orange{{end}} mr-2 {{if eq $.SelectedTarget (print "global:" .Key)}}text-white{{end}}"></i>
+                                    <span>{{.Name}}</span>
+                                </div>
+                                {{if .Enabled}}
+                                <span class="tag-status green light-4 text-green-dark-3 rounded-1 font-s1 font-w800 px-1 py-0 ml-2" style="font-size: 0.6rem; transform: scale(0.8);">ON</span>
+                                {{end}}
                             </a>
                         </li>
                         {{end}}
                     </ul>
                 </div>
             </div>
+
+            <!-- Themes Library -->
+            <div class="card white shadow-1 rounded-1 p-0 border-all-1 border-slate-light-4">
+                <div class="p-3 bg-slate-light-5 border-bottom-1 border-slate-light-4">
+                    <h3 class="font-w800 font-s1 uppercase text-slate-700 mb-0 tracking-widest">Theme Library</h3>
+                </div>
+                <div class="p-1 overflow-x-hidden">
+                    {{range $theme := .ThemeLibrary}}
+                    <div x-data="{ open: {{if hasPrefix $.SelectedTarget (print "theme:" $theme.Name)}}true{{else}}false{{end}} }" class="mb-1">
+                        <button @click="open = !open" class="flex align-center flex-row justify-between w-100 p-2 rounded-1 text-slate-900 font-w800 hover-bg-slate-light-5" style="border:none; background:none; text-align:left; font-size: 0.85rem;">
+                            <div class="flex align-center">
+                                <i class="fas fa-folder-open text-blue-light-3 mr-2"></i>
+                                <span class="truncate">{{$theme.Name}}</span>
+                            </div>
+                            <i class="fas fa-chevron-down font-s1 transition-all" :style="open ? 'transform: rotate(180deg)' : ''"></i>
+                        </button>
+                        <div x-show="open" x-collapse class="pl-3 mt-1">
+                            <ul class="list-none p-0 m-0 border-left-1 border-slate-light-4 ml-2">
+                                {{range $theme.Files}}
+                                <li class="mb-1">
+                                    <a href="/manage/editor?target=theme:{{$theme.Name}}:{{.}}" 
+                                       class="flex align-center p-2 rounded-1 transition-all {{if eq $.SelectedTarget (print "theme:" $theme.Name ":" .)}}blue font-w700 shadow-1{{else}}text-slate-600 hover-bg-slate-light-5{{end}}"
+                                       style="text-decoration: none; font-size: 0.8rem; margin-left: -1px;">
+                                        <i class="fas {{if or (hasSuffix . ".js") (hasSuffix . ".ts")}}fa-js text-yellow{{else if or (hasSuffix . ".css") (hasSuffix . ".scss")}}fa-css3 text-blue{{else if hasSuffix . ".html"}}fa-html5 text-orange{{else}}fa-file-code text-grey{{end}} mr-2"></i>
+                                        <span class="truncate">{{.}}</span>
+                                    </a>
+                                </li>
+                                {{end}}
+                            </ul>
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
         </div>
 
         <!-- Editor Pane -->
-        <div class="col-xs1 col-lg3 h-100">
-            <div class="card white shadow-1 rounded-1 p-0 h-100 border-all-1 border-slate-light-4 overflow-hidden d-flex fx-col">
-                <div id="monaco-editor-container" style="width: 100%; flex-grow: 1;"></div>
+        <div class="col-xs1 col-lg3 h-100 flex flex-column" style="display: flex; flex-direction: column;">
+            <!-- Persistent Toolbar -->
+            <div class="card white shadow-1 rounded-1 p-3 mb-3 border-all-1 border-slate-light-4 flex flex-row justify-between align-center">
+                <div class="flex align-center">
+                    <h2 class="font-w900 font-s3 text-slate-900 mb-0 mr-3">
+                        {{if not .SelectedTarget}}
+                        Select a file to begin
+                        {{else if eq .TargetType "global"}}
+                        Global: <span class="text-blue">{{replace (trimPrefix .SelectedTarget "global:") "_" " " | title}}</span>
+                        {{else}}
+                        File: <span class="text-blue">{{trimPrefix .SelectedTarget "theme:"}}</span>
+                        {{end}}
+                    </h2>
+                    
+                    {{if eq .TargetType "global"}}
+                    <div class="form-field ml-4 flex align-center g-gap-2">
+                        <label class="switch">
+                            <input type="checkbox" x-model="enabled">
+                            <span class="slider round"></span>
+                        </label>
+                        <span class="font-w800 font-s1 uppercase text-slate-700" x-text="enabled ? 'Enabled' : 'Disabled'"></span>
+                    </div>
+                    {{end}}
+                </div>
+
+                <div class="flex g-gap-2">
+                    <button @click="performSave" :disabled="!target || saving" class="btn blue rounded-1 shadow-1 font-w900 px-5">
+                        <i x-show="!saving" class="fas fa-save mr-2"></i>
+                        <i x-show="saving" class="fas fa-spinner fa-spin mr-2"></i>
+                        <span x-text="saving ? 'Saving...' : 'Save Changes'"></span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="fx-grow overflow-hidden flex flex-column" style="flex: 1 1 0%; width: 100%; display: flex; flex-direction: column; min-height: 0;">
+                {{if .SelectedTarget}}
+                    {{if eq .TargetType "global"}}
+                        {{range .Injectables}}
+                            {{if eq $.SelectedTarget (print "global:" .Key)}}
+                            <div class="blue light-5 p-3 mb-2 rounded-1 border-all-1 border-blue-light-4 flex align-center">
+                                <i class="fas fa-info-circle text-blue mr-3 font-s4"></i>
+                                <div class="text-blue-dark-3 font-w600 font-s1">{{.Help}}</div>
+                            </div>
+                            {{end}}
+                        {{end}}
+                    {{end}}
+                    <div class="card white shadow-1 rounded-1 p-0 fx-grow border-all-1 border-slate-light-4 overflow-hidden flex flex-column" style="flex: 1 1 0%; width: 100%; display: flex; flex-direction: column; min-height: 0;">
+                        <div id="monaco-editor-container" style="flex: 1 1 0%; min-height: 0; width: 100%;"></div>
+                    </div>
+                {{else}}
+                    <div class="card white shadow-1 rounded-1 fx-grow border-all-1 border-slate-light-4 flex justify-center align-center bg-slate-light-5" style="flex: 1 1 0%; width: 100%; min-height: 0;">
+                        <div class="text-center opacity-50">
+                            <i class="fas fa-code-branch font-s12 text-slate-400 mb-4"></i>
+                            <p class="font-w900 font-s4 text-slate-500">Pick a theme file or global injectable</p>
+                            <p class="font-w600 text-slate-400">Your changes will be stored and applied instantly.</p>
+                        </div>
+                    </div>
+                {{end}}
             </div>
         </div>
     </div>
 </div>
 
-<!-- Monaco Editor Scripts -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
 <script>
-    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }});
+    const currentTarget = "{{.SelectedTarget}}";
+    let monacoInitializing = false;
+    
+    function startEditor() {
+        if (!currentTarget || !window.monaco) return;
 
-    let editor;
-    const initialContent = {{.FileContent | json}};
-    const fileName = "{{.SelectedFile}}";
-    const themeName = "{{.ThemeName}}";
-
-    require(['vs/editor/editor.main'], function() {
         // Determine language
         let language = 'html';
-        if (fileName.endsWith('.js')) language = 'javascript';
-        else if (fileName.endsWith('.css')) language = 'css';
-        else if (fileName.endsWith('.scss')) language = 'scss';
-        else if (fileName.endsWith('.json')) language = 'json';
+        if (currentTarget.endsWith('.js') || currentTarget.endsWith(':custom_js')) language = 'javascript';
+        else if (currentTarget.endsWith('.css') || currentTarget.endsWith(':custom_css')) language = 'css';
+        else if (currentTarget.endsWith('.scss')) language = 'scss';
+        else if (currentTarget.endsWith('.json')) language = 'json';
 
-        editor = monaco.editor.create(document.getElementById('monaco-editor-container'), {
-            value: initialContent,
+        window.monacoEditorInstance = monaco.editor.create(document.getElementById('monaco-editor-container'), {
+            value: {{.FileContent | js}},
             language: language,
             theme: 'vs-light',
             automaticLayout: true,
@@ -83,45 +195,40 @@
         });
 
         // Save on Ctrl+S
-        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function() {
-            saveFile();
+        window.monacoEditorInstance.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function() {
+            window.dispatchEvent(new CustomEvent('trigger-save'));
         });
-    });
-
-    async function saveFile() {
-        const content = editor.getValue();
-        const saveBtn = document.getElementById('save-button');
-        const originalText = saveBtn.innerHTML;
-        
-        saveBtn.disabled = true;
-        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
-
-        try {
-            const formData = new FormData();
-            formData.append('theme', themeName);
-            formData.append('file', fileName);
-            formData.append('content', content);
-
-            const res = await fetch('/manage/themes/save', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (res.ok) {
-                Alpine.store('app').notify('File saved successfully', 'success');
-            } else {
-                Alpine.store('app').notify('Failed to save file', 'error');
-            }
-        } catch (err) {
-            console.error(err);
-            Alpine.store('app').notify('Error connecting to server', 'error');
-        } finally {
-            saveBtn.disabled = false;
-            saveBtn.innerHTML = originalText;
-        }
     }
 
-    document.getElementById('save-button').addEventListener('click', saveFile);
+    function initMonaco() {
+        if (monacoInitializing || window.monacoEditorInstance) return;
+        if (!currentTarget) return;
+        
+        if (!window.require) {
+            setTimeout(initMonaco, 100);
+            return;
+        }
+        
+        monacoInitializing = true;
+
+        if (window.monaco) {
+            startEditor();
+            monacoInitializing = false;
+            return;
+        }
+
+        require(['vs/editor/editor.main'], function() {
+            startEditor();
+            monacoInitializing = false;
+        });
+    }
+
+    // Wait for everything to be ready
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        setTimeout(initMonaco, 100);
+    } else {
+        document.addEventListener('DOMContentLoaded', () => setTimeout(initMonaco, 100));
+    }
 </script>
 
 <style>
@@ -131,10 +238,59 @@
         text-overflow: ellipsis;
         max-width: 100%;
     }
-    /* Fix for Monaco container height */
     #monaco-editor-container {
         min-height: 0;
         flex: 1;
+    }
+    .slider.round {
+        border-radius: 34px;
+    }
+    .slider.round:before {
+        border-radius: 50%;
+    }
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 40px;
+        height: 20px;
+    }
+    .switch input { 
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        -webkit-transition: .4s;
+        transition: .4s;
+    }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 14px;
+        width: 14px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        -webkit-transition: .4s;
+        transition: .4s;
+    }
+    input:checked + .slider {
+        background-color: #2563eb;
+    }
+    input:focus + .slider {
+        box-shadow: 0 0 1px #2563eb;
+    }
+    input:checked + .slider:before {
+        -webkit-transform: translateX(20px);
+        -ms-transform: translateX(20px);
+        transform: translateX(20px);
     }
 </style>
 {{end}}

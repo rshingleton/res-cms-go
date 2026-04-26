@@ -243,23 +243,23 @@ func AddCommentHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
-// PostsByCategoryHandler handles filtered posts by category
-func PostsByCategoryHandler(w http.ResponseWriter, r *http.Request) {
-	category := strings.TrimPrefix(r.URL.Path, "/entries/category/")
-	if category == "" {
+// PostsByPageHandler handles filtered posts by page (category)
+func PostsByPageHandler(w http.ResponseWriter, r *http.Request) {
+	pageSlug := strings.TrimPrefix(r.URL.Path, "/entries/page/")
+	if pageSlug == "" {
 		http.NotFound(w, r)
 		return
 	}
 
-	var cat models.Category
-	if err := db.DB.Where("slug = ?", category).First(&cat).Error; err != nil {
+	var p models.Page
+	if err := db.DB.Where("slug = ?", pageSlug).First(&p).Error; err != nil {
 		http.NotFound(w, r)
 		return
 	}
 
 	var entries []models.Entry
-	if err := db.DB.Joins("JOIN entry_categories ON entries.id = entry_categories.entry_id").
-		Where("entry_categories.category_id = ? AND entries.status = ?", cat.ID, "published").
+	if err := db.DB.Joins("JOIN entry_pages ON entries.id = entry_pages.entry_id").
+		Where("entry_pages.page_id = ? AND entries.status = ?", p.ID, "published").
 		Order("entries.created_at DESC").
 		Preload("Author").
 		Find(&entries).Error; err != nil {
@@ -278,7 +278,7 @@ func PostsByCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"Entries":  entries,
 		"BlogName": blogName,
-		"Category": cat,
+		"Page":     p,
 		"User":     middleware.OptionalUser(r),
 	}
 
@@ -481,11 +481,52 @@ var renderTemplate = func(w http.ResponseWriter, r *http.Request, name string, d
 	// Get flash from cookie
 	data["Flash"] = middleware.GetFlashFromRequest(w, r)
 
+	// Get all settings for injection
+	var settings []models.SiteSetting
+	db.DB.Find(&settings)
+	settingsMap := make(map[string]string)
+	for _, s := range settings {
+		settingsMap[s.Name] = s.Value
+	}
+
+	// Inject settings with res_ prefix
+	for k, v := range settingsMap {
+		data["res_"+k] = v
+	}
+
+	// Special handling for HTML/CSS/JS to avoid escaping and wrap in tags if enabled
+	if settingsMap["custom_css_enabled"] == "1" && settingsMap["custom_css"] != "" {
+		data["res_custom_css_style"] = template.HTML("<style>\n" + settingsMap["custom_css"] + "\n</style>")
+	} else {
+		data["res_custom_css_style"] = template.HTML("")
+	}
+
+	if settingsMap["custom_js_enabled"] == "1" && settingsMap["custom_js"] != "" {
+		data["res_custom_js_script"] = template.HTML("<script>\n" + settingsMap["custom_js"] + "\n</script>")
+	} else {
+		data["res_custom_js_script"] = template.HTML("")
+	}
+
+	if settingsMap["custom_header_html_enabled"] == "1" {
+		data["res_custom_header_html_parsed"] = template.HTML(settingsMap["custom_header_html"])
+	} else {
+		data["res_custom_header_html_parsed"] = template.HTML("")
+	}
+
+	if settingsMap["custom_footer_html_enabled"] == "1" {
+		data["res_custom_footer_html_parsed"] = template.HTML(settingsMap["custom_footer_html"])
+	} else {
+		data["res_custom_footer_html_parsed"] = template.HTML("")
+	}
+
 	// Set default values
 	if data["BlogName"] != nil {
 		data["res_blog_name"] = data["BlogName"]
 	} else if data["res_blog_name"] == nil {
-		data["res_blog_name"] = "ResCMS"
+		data["res_blog_name"] = settingsMap["blog_name"]
+		if data["res_blog_name"] == "" {
+			data["res_blog_name"] = "ResCMS"
+		}
 	}
 
 	// If we have a theme engine and the template is in it, use theme-specific template
@@ -497,13 +538,13 @@ var renderTemplate = func(w http.ResponseWriter, r *http.Request, name string, d
 		themeTemplateName := strings.TrimPrefix(name, "public/")
 		if t, ok := ThemeEngine.Templates[themeTemplateName]; ok {
 			log.Printf("Executing theme template %s for %s", themeTemplateName, name)
-			
+
 			// Try to use the master layout as entry point
 			entryPoint := themeTemplateName
 			if t.Lookup("layouts/main.html") != nil {
 				entryPoint = "layouts/main.html"
 			}
-			
+
 			return t.ExecuteTemplate(w, entryPoint, data)
 		}
 	}

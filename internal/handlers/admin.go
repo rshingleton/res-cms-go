@@ -33,11 +33,11 @@ func AdminIndexHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get counts
-	var postCount, commentCount, userCount, categoryCount int64
+	var postCount, commentCount, userCount, pageCount int64
 	db.DB.Model(&models.Entry{}).Count(&postCount)
 	db.DB.Model(&models.Comment{}).Count(&commentCount)
 	db.DB.Model(&models.User{}).Count(&userCount)
-	db.DB.Model(&models.Page{}).Where("is_system = ?", false).Count(&categoryCount)
+	db.DB.Model(&models.Page{}).Where("is_system = ?", false).Count(&pageCount)
 
 	// Get recent posts
 	var recentPosts []models.Entry
@@ -53,7 +53,7 @@ func AdminIndexHandler(w http.ResponseWriter, r *http.Request) {
 		"PostCount":       postCount,
 		"CommentCount":    commentCount,
 		"UserCount":       userCount,
-		"CategoryCount":   categoryCount,
+		"PageCount":       pageCount,
 		"RecentPosts":     recentPosts,
 		"PendingComments": pendingComments,
 		"ActiveTab":       "dashboard",
@@ -109,20 +109,20 @@ func AdminAddPostFormHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var categories []models.Page
-	db.DB.Where("is_system = ?", false).Find(&categories)
+	var pages []models.Page
+	db.DB.Where("is_system = ?", false).Find(&pages)
 
 	var tags []models.Tag
 	db.DB.Find(&tags)
 
 	data := map[string]interface{}{
-		"BlogName":   getBlogName(),
-		"User":       user,
-		"Categories": categories,
-		"Tags":       tags,
-		"Entry":      models.Entry{},
-		"IsNew":      true,
-		"ActiveTab":  "posts",
+		"BlogName":  getBlogName(),
+		"User":      user,
+		"Pages":     pages,
+		"Tags":      tags,
+		"Entry":     models.Entry{},
+		"IsNew":     true,
+		"ActiveTab": "posts",
 	}
 
 	if err := renderTemplate(w, r, "admin/posts/edit.html", data); err != nil {
@@ -154,7 +154,7 @@ func AdminAddPostHandler(w http.ResponseWriter, r *http.Request) {
 	slug := r.PostForm.Get("slug")
 	content := r.PostForm.Get("content")
 	status := r.PostForm.Get("status")
-	categoryIDs := r.PostForm["categories"]
+	pageIDs := r.PostForm["pages"]
 	tagIDs := r.PostForm["tags"]
 
 	if title == "" || slug == "" {
@@ -179,9 +179,9 @@ func AdminAddPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Associate pages (acting as categories)
-	if len(categoryIDs) > 0 {
+	if len(pageIDs) > 0 {
 		var pages []models.Page
-		for _, id := range categoryIDs {
+		for _, id := range pageIDs {
 			if pid, err := strconv.ParseUint(id, 10, 32); err == nil {
 				pages = append(pages, models.Page{ID: uint(pid)})
 			}
@@ -225,20 +225,20 @@ func AdminEditPostFormHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var categories []models.Page
-	db.DB.Where("is_system = ?", false).Find(&categories)
+	var pages []models.Page
+	db.DB.Where("is_system = ?", false).Find(&pages)
 
 	var tags []models.Tag
 	db.DB.Find(&tags)
 
 	data := map[string]interface{}{
-		"BlogName":   getBlogName(),
-		"User":       user,
-		"Entry":      entry,
-		"Categories": categories,
-		"Tags":       tags,
-		"IsNew":      false,
-		"ActiveTab":  "posts",
+		"BlogName":  getBlogName(),
+		"User":      user,
+		"Entry":     entry,
+		"Pages":     pages,
+		"Tags":      tags,
+		"IsNew":     false,
+		"ActiveTab": "posts",
 	}
 
 	if err := renderTemplate(w, r, "admin/posts/edit.html", data); err != nil {
@@ -271,7 +271,7 @@ func AdminUpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 	slug := r.PostForm.Get("slug")
 	content := r.PostForm.Get("content")
 	status := r.PostForm.Get("status")
-	categoryIDs := r.PostForm["categories"]
+	pageIDs := r.PostForm["pages"]
 	tagIDs := r.PostForm["tags"]
 
 	updates := map[string]interface{}{
@@ -282,24 +282,24 @@ func AdminUpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := db.DB.Model(&models.Entry{}).Where("id = ?", id).Updates(updates).Error; err != nil {
-		log.Printf("Error updating entry: %v", err)
+		log.Printf("Error updating entry %d: %v", id, err)
 		middleware.GenerateFlashCookie(w, "Failed to update entry")
 		http.Redirect(w, r, "/manage/entries/edit/"+idStr, http.StatusFound)
 		return
 	}
 
-	// Update categories
+	// Update pages
 	var entry models.Entry
 	db.DB.First(&entry, id)
-	if len(categoryIDs) > 0 {
+	if len(pageIDs) > 0 {
 		db.DB.Model(&entry).Association("Pages").Clear()
-		var categories []models.Page
-		for _, id := range categoryIDs {
-			if cid, err := strconv.ParseUint(id, 10, 32); err == nil {
-				categories = append(categories, models.Page{ID: uint(cid)})
+		var pages []models.Page
+		for _, id := range pageIDs {
+			if pid, err := strconv.ParseUint(id, 10, 32); err == nil {
+				pages = append(pages, models.Page{ID: uint(pid)})
 			}
 		}
-		db.DB.Model(&entry).Association("Pages").Append(&categories)
+		db.DB.Model(&entry).Association("Pages").Append(&pages)
 	}
 
 	// Update tags
@@ -377,8 +377,8 @@ func AdminDraftPostHandler(w http.ResponseWriter, r *http.Request) {
 
 // ==================== PAGES / TAXONOMY ====================
 
-// AdminListCategoriesHandler lists all pages (taxonomy)
-func AdminListCategoriesHandler(w http.ResponseWriter, r *http.Request) {
+// AdminListPagesHandler lists all pages (taxonomy)
+func AdminListPagesHandler(w http.ResponseWriter, r *http.Request) {
 	user := middleware.RequireUser(r)
 	if user == nil {
 		http.Redirect(w, r, "/access/login", http.StatusFound)
@@ -389,20 +389,20 @@ func AdminListCategoriesHandler(w http.ResponseWriter, r *http.Request) {
 	db.DB.Order("is_system DESC, title ASC").Find(&pages)
 
 	data := map[string]interface{}{
-		"BlogName":   getBlogName(),
-		"User":       user,
-		"Categories": pages,
-		"ActiveTab":  "categories",
+		"BlogName":  getBlogName(),
+		"User":      user,
+		"Pages":     pages,
+		"ActiveTab": "pages",
 	}
 
-	if err := renderTemplate(w, r, "admin/categories/list.html", data); err != nil {
+	if err := renderTemplate(w, r, "admin/pages/list.html", data); err != nil {
 		log.Printf("Error rendering template: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
 
-// AdminAddCategoryHandler creates a new page
-func AdminAddCategoryHandler(w http.ResponseWriter, r *http.Request) {
+// AdminAddPageHandler creates a new page
+func AdminAddPageHandler(w http.ResponseWriter, r *http.Request) {
 	user := middleware.RequireUser(r)
 	if user == nil {
 		http.Redirect(w, r, "/access/login", http.StatusFound)
@@ -411,7 +411,7 @@ func AdminAddCategoryHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := r.ParseForm(); err != nil {
 		log.Printf("Error parsing form: %v", err)
-		http.Redirect(w, r, "/manage/categories", http.StatusFound)
+		http.Redirect(w, r, "/manage/pages", http.StatusFound)
 		return
 	}
 
@@ -420,7 +420,7 @@ func AdminAddCategoryHandler(w http.ResponseWriter, r *http.Request) {
 
 	if title == "" || slug == "" {
 		middleware.GenerateFlashCookie(w, "Title and slug are required")
-		http.Redirect(w, r, "/manage/categories", http.StatusFound)
+		http.Redirect(w, r, "/manage/pages", http.StatusFound)
 		return
 	}
 
@@ -437,14 +437,14 @@ func AdminAddCategoryHandler(w http.ResponseWriter, r *http.Request) {
 		middleware.GenerateFlashCookie(w, "Page '"+title+"' created successfully")
 	}
 
-	http.Redirect(w, r, "/manage/categories", http.StatusFound)
+	http.Redirect(w, r, "/manage/pages", http.StatusFound)
 }
 
-// AdminEditCategoryFormHandler shows edit page form
-func AdminEditCategoryFormHandler(w http.ResponseWriter, r *http.Request) {
+// AdminEditPageFormHandler shows edit page form
+func AdminEditPageFormHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
 	if idStr == "" {
-		idStr = strings.TrimPrefix(r.URL.Path, "/manage/categories/edit/")
+		idStr = strings.TrimPrefix(r.URL.Path, "/manage/pages/edit/")
 	}
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
@@ -471,21 +471,21 @@ func AdminEditCategoryFormHandler(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"BlogName":  getBlogName(),
 		"User":      user,
-		"Category":  page,
-		"ActiveTab": "categories",
+		"Page":      page,
+		"ActiveTab": "pages",
 	}
 
-	if err := renderTemplate(w, r, "admin/categories/edit.html", data); err != nil {
+	if err := renderTemplate(w, r, "admin/pages/edit.html", data); err != nil {
 		log.Printf("Error rendering template: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
 
-// AdminUpdateCategoryHandler updates a page
-func AdminUpdateCategoryHandler(w http.ResponseWriter, r *http.Request) {
+// AdminUpdatePageHandler updates a page
+func AdminUpdatePageHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
 	if idStr == "" {
-		idStr = strings.TrimPrefix(r.URL.Path, "/manage/categories/update/")
+		idStr = strings.TrimPrefix(r.URL.Path, "/manage/pages/update/")
 	}
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
@@ -501,7 +501,7 @@ func AdminUpdateCategoryHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := r.ParseForm(); err != nil {
 		log.Printf("Error parsing form: %v", err)
-		http.Redirect(w, r, "/manage/categories", http.StatusFound)
+		http.Redirect(w, r, "/manage/pages", http.StatusFound)
 		return
 	}
 
@@ -524,12 +524,12 @@ func AdminUpdateCategoryHandler(w http.ResponseWriter, r *http.Request) {
 		middleware.GenerateFlashCookie(w, "Page updated successfully")
 	}
 
-	http.Redirect(w, r, "/manage/categories", http.StatusFound)
+	http.Redirect(w, r, "/manage/pages", http.StatusFound)
 }
 
-// AdminDeleteCategoryHandler deletes a page
-func AdminDeleteCategoryHandler(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "/manage/categories/delete/")
+// AdminDeletePageHandler deletes a page
+func AdminDeletePageHandler(w http.ResponseWriter, r *http.Request) {
+	idStr := strings.TrimPrefix(r.URL.Path, "/manage/pages/delete/")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
 		http.NotFound(w, r)
@@ -540,7 +540,7 @@ func AdminDeleteCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	var page models.Page
 	if err := db.DB.First(&page, id).Error; err == nil && page.IsSystem {
 		middleware.GenerateFlashCookie(w, "Cannot delete system pages")
-		http.Redirect(w, r, "/manage/categories", http.StatusFound)
+		http.Redirect(w, r, "/manage/pages", http.StatusFound)
 		return
 	}
 
@@ -551,7 +551,7 @@ func AdminDeleteCategoryHandler(w http.ResponseWriter, r *http.Request) {
 		middleware.GenerateFlashCookie(w, "Page deleted successfully")
 	}
 
-	http.Redirect(w, r, "/manage/categories", http.StatusFound)
+	http.Redirect(w, r, "/manage/pages", http.StatusFound)
 }
 
 // ==================== COMMENTS ====================
@@ -877,14 +877,25 @@ func AdminSettingsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		blogName := r.PostForm.Get("blog_name")
-		layoutStyle := r.PostForm.Get("layout_style")
-
-		if blogName != "" {
-			db.DB.Model(&models.SiteSetting{}).Where("name = ?", "blog_name").Update("value", blogName)
+		settingKeys := []string{
+			"blog_name", "tagline", "ga_id", "meta_desc",
+			"custom_css", "custom_js", "custom_header_html", "custom_footer_html",
 		}
-		if layoutStyle != "" {
-			db.DB.Model(&models.SiteSetting{}).Where("name = ?", "layout_style").Update("value", layoutStyle)
+
+		for _, key := range settingKeys {
+			if r.PostForm.Has(key) {
+				val := r.PostForm.Get(key)
+				setting := models.SiteSetting{Name: key}
+				db.DB.Where(models.SiteSetting{Name: key}).FirstOrCreate(&setting)
+				db.DB.Model(&setting).Update("value", val)
+			}
+		}
+
+		// Handle AJAX request from Monaco editor or normal form
+		if r.Header.Get("X-Requested-With") == "XMLHttpRequest" {
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+			return
 		}
 
 		middleware.GenerateFlashCookie(w, "Settings saved successfully")
@@ -962,10 +973,19 @@ func AdminListThemesHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Fetch settings for customization tab
+	var settings []models.SiteSetting
+	db.DB.Find(&settings)
+	settingsMap := make(map[string]string)
+	for _, s := range settings {
+		settingsMap[s.Name] = s.Value
+	}
+
 	data := map[string]interface{}{
 		"BlogName":  getBlogName(),
 		"User":      user,
 		"Themes":    themeList,
+		"Settings":  settingsMap,
 		"ActiveTab": "themes",
 	}
 
@@ -1055,8 +1075,8 @@ func AdminActivateThemeHandler(w http.ResponseWriter, r *http.Request) {
 			b, _ := json.Marshal(v)
 			return template.JS(b)
 		},
-		"toUpper":  func(s string) string { return strings.ToUpper(s) },
-		"safeHTML": func(s string) template.HTML { return template.HTML(s) },
+		"toUpper":   func(s string) string { return strings.ToUpper(s) },
+		"safeHTML":  func(s string) template.HTML { return template.HTML(s) },
 		"hasSuffix": func(s, suffix string) bool { return strings.HasSuffix(s, suffix) },
 	})
 
@@ -1076,75 +1096,104 @@ func AdminActivateThemeHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/manage/themes", http.StatusFound)
 }
 
-// AdminThemeEditorHandler shows the theme file editor
-func AdminThemeEditorHandler(w http.ResponseWriter, r *http.Request) {
-	themeName := r.PathValue("theme")
-	if themeName == "" {
-		themeName = strings.TrimPrefix(r.URL.Path, "/manage/themes/edit/")
-	}
-	if themeName == "" {
-		http.NotFound(w, r)
-		return
-	}
-
+// AdminUnifiedEditorHandler shows the unified Super Editor
+func AdminUnifiedEditorHandler(w http.ResponseWriter, r *http.Request) {
 	user := middleware.RequireUser(r)
-	if user == nil {
+	if user == nil || !user.IsAdmin {
 		http.Redirect(w, r, "/access/login", http.StatusFound)
 		return
 	}
 
-	themePath := filepath.Join("themes", themeName)
-	if _, err := os.Stat(themePath); os.IsNotExist(err) {
-		http.NotFound(w, r)
-		return
+	// 1. List all themes and their files
+	type ThemeFiles struct {
+		Name  string
+		Files []string
 	}
+	var themeLibrary []ThemeFiles
 
-	// List files recursively
-	var files []string
-	filepath.Walk(themePath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if !info.IsDir() {
-			rel, _ := filepath.Rel(themePath, path)
-			ext := strings.ToLower(filepath.Ext(rel))
-			if ext == ".html" || ext == ".js" || ext == ".css" || ext == ".json" || ext == ".scss" {
-				files = append(files, rel)
-			}
-		}
-		return nil
-	})
-
-	selectedFile := r.URL.Query().Get("file")
-	if selectedFile == "" && len(files) > 0 {
-		for _, f := range files {
-			if f == "theme.json" {
-				selectedFile = f
-				break
-			}
-		}
-		if selectedFile == "" {
-			selectedFile = files[0]
+	themes, _ := os.ReadDir(ThemeEngine.ThemesPath)
+	for _, t := range themes {
+		if t.IsDir() {
+			var files []string
+			themePath := filepath.Join(ThemeEngine.ThemesPath, t.Name())
+			filepath.Walk(themePath, func(path string, info os.FileInfo, err error) error {
+				if err != nil || info.IsDir() {
+					return nil
+				}
+				rel, _ := filepath.Rel(themePath, path)
+				ext := strings.ToLower(filepath.Ext(rel))
+				if ext == ".html" || ext == ".js" || ext == ".css" || ext == ".json" || ext == ".scss" {
+					files = append(files, rel)
+				}
+				return nil
+			})
+			themeLibrary = append(themeLibrary, ThemeFiles{Name: t.Name(), Files: files})
 		}
 	}
 
+	// 2. Define global injectables
+	type Injectable struct {
+		Key     string
+		Name    string
+		Type    string
+		Enabled bool
+		Help    string
+	}
+	injectables := []Injectable{
+		{Key: "custom_css", Name: "Custom CSS", Type: "css", Help: "Raw CSS injected into the <head>. No <style> tags needed."},
+		{Key: "custom_js", Name: "Header JS", Type: "js", Help: "Raw JavaScript injected into the <head>. No <script> tags needed."},
+		{Key: "custom_header_html", Name: "Header HTML", Type: "html", Help: "Raw HTML injected at the bottom of the <head>."},
+		{Key: "custom_footer_html", Name: "Footer HTML", Type: "html", Help: "Raw HTML injected at the bottom of the <body>."},
+	}
+
+	// 3. Fetch settings for injectables status
+	var settings []models.SiteSetting
+	db.DB.Find(&settings)
+	settingsMap := make(map[string]string)
+	for _, s := range settings {
+		settingsMap[s.Name] = s.Value
+	}
+
+	for i, inj := range injectables {
+		if settingsMap[inj.Key+"_enabled"] == "1" {
+			injectables[i].Enabled = true
+		}
+	}
+
+	// 4. Handle selected target
+	target := r.URL.Query().Get("target") // global:custom_css or theme:classic:layouts/main.html
 	content := ""
-	if selectedFile != "" {
-		fullPath := filepath.Join(themePath, selectedFile)
-		b, err := os.ReadFile(fullPath)
-		if err == nil {
-			content = string(b)
+	targetType := ""
+	targetEnabled := false
+
+	if strings.HasPrefix(target, "global:") {
+		key := strings.TrimPrefix(target, "global:")
+		content = settingsMap[key]
+		targetType = "global"
+		targetEnabled = settingsMap[key+"_enabled"] == "1"
+	} else if strings.HasPrefix(target, "theme:") {
+		parts := strings.SplitN(strings.TrimPrefix(target, "theme:"), ":", 2)
+		if len(parts) == 2 {
+			themeName, fileName := parts[0], parts[1]
+			fullPath := filepath.Join(ThemeEngine.ThemesPath, themeName, fileName)
+			b, err := os.ReadFile(fullPath)
+			if err == nil {
+				content = string(b)
+			}
+			targetType = "file"
 		}
 	}
 
 	data := map[string]interface{}{
-		"BlogName":     getBlogName(),
-		"User":         user,
-		"ThemeName":    themeName,
-		"Files":        files,
-		"SelectedFile": selectedFile,
-		"FileContent":  content,
-		"ActiveTab":    "themes",
+		"BlogName":       getBlogName(),
+		"User":           user,
+		"ThemeLibrary":   themeLibrary,
+		"Injectables":    injectables,
+		"SelectedTarget": target,
+		"FileContent":    content,
+		"TargetType":     targetType,
+		"TargetEnabled":  targetEnabled,
+		"ActiveTab":      "themes",
 	}
 
 	if err := renderTemplate(w, r, "admin/themes/editor.html", data); err != nil {
@@ -1153,33 +1202,50 @@ func AdminThemeEditorHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// AdminThemeSaveFileHandler saves a file in the theme
-func AdminThemeSaveFileHandler(w http.ResponseWriter, r *http.Request) {
+// AdminUnifiedSaveHandler saves either a theme file or a global setting
+func AdminUnifiedSaveHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	themeName := r.FormValue("theme")
-	fileName := r.FormValue("file")
+	target := r.FormValue("target")
 	content := r.FormValue("content")
+	enabled := r.FormValue("enabled") // "1" or "0"
 
-	if themeName == "" || fileName == "" {
-		http.Error(w, "Missing theme or file name", http.StatusBadRequest)
+	if target == "" {
+		http.Error(w, "Missing target", http.StatusBadRequest)
 		return
 	}
 
-	fullPath := filepath.Join("themes", themeName, fileName)
-	cleanPath := filepath.Clean(fullPath)
-	if !strings.HasPrefix(cleanPath, filepath.Join("themes", themeName)) {
-		http.Error(w, "Invalid file path", http.StatusForbidden)
-		return
-	}
+	if strings.HasPrefix(target, "global:") {
+		key := strings.TrimPrefix(target, "global:")
+		// Save content
+		setting := models.SiteSetting{Name: key}
+		db.DB.Where(models.SiteSetting{Name: key}).FirstOrCreate(&setting)
+		db.DB.Model(&setting).Update("value", content)
 
-	if err := os.WriteFile(cleanPath, []byte(content), 0644); err != nil {
-		log.Printf("Write error: %v", err)
-		http.Error(w, "Failed to save file", http.StatusInternalServerError)
-		return
+		// Save enabled status
+		statusKey := key + "_enabled"
+		statusSetting := models.SiteSetting{Name: statusKey}
+		db.DB.Where(models.SiteSetting{Name: statusKey}).FirstOrCreate(&statusSetting)
+		db.DB.Model(&statusSetting).Update("value", enabled)
+	} else if strings.HasPrefix(target, "theme:") {
+		parts := strings.SplitN(strings.TrimPrefix(target, "theme:"), ":", 2)
+		if len(parts) == 2 {
+			themeName, fileName := parts[0], parts[1]
+			fullPath := filepath.Join(ThemeEngine.ThemesPath, themeName, fileName)
+			cleanPath := filepath.Clean(fullPath)
+			if !strings.HasPrefix(cleanPath, filepath.Join(ThemeEngine.ThemesPath, themeName)) {
+				http.Error(w, "Invalid file path", http.StatusForbidden)
+				return
+			}
+			if err := os.WriteFile(cleanPath, []byte(content), 0644); err != nil {
+				log.Printf("Write error: %v", err)
+				http.Error(w, "Failed to save file", http.StatusInternalServerError)
+				return
+			}
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -1198,14 +1264,37 @@ func AdminThemeCopyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	src := filepath.Join("themes", themeName)
-	base := themeName + "-copy"
-	dst := filepath.Join("themes", base)
+	var dst string
 
-	for i := 1; ; i++ {
-		if _, err := os.Stat(dst); os.IsNotExist(err) {
-			break
+	if r.Method == http.MethodPost {
+		newName := r.FormValue("new_name")
+		if newName == "" {
+			http.Error(w, "New name is required", http.StatusBadRequest)
+			return
 		}
-		dst = filepath.Join("themes", base+"-"+strconv.Itoa(i))
+		// Sanitize newName: only alphanumeric, dashes, underscores
+		newName = strings.Map(func(r rune) rune {
+			if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_' {
+				return r
+			}
+			return -1
+		}, newName)
+
+		dst = filepath.Join("themes", newName)
+		if _, err := os.Stat(dst); !os.IsNotExist(err) {
+			middleware.GenerateFlashCookie(w, "A theme with that name already exists")
+			http.Redirect(w, r, "/manage/themes", http.StatusFound)
+			return
+		}
+	} else {
+		base := themeName + "-copy"
+		dst = filepath.Join("themes", base)
+		for i := 1; ; i++ {
+			if _, err := os.Stat(dst); os.IsNotExist(err) {
+				break
+			}
+			dst = filepath.Join("themes", base+"-"+strconv.Itoa(i))
+		}
 	}
 
 	err := filepath.Walk(src, func(path string, info os.FileInfo, err error) error {

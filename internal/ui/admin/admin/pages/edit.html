@@ -1,0 +1,180 @@
+{{define "content"}}
+<div class="grix xs1 gutter-xs4" style="width: 100%;">
+    <div class="d-flex fx-row fx-space-between vcenter mb-2">
+        <div>
+            <h1 class="font-w900 font-s6 text-slate-900 mb-1">Edit Page</h1>
+            <p class="text-grey font-s2 mb-0">Update page title, slug, and content.</p>
+        </div>
+        <a href="/manage/pages" class="btn white text-slate-700 shadow-1 rounded-1 font-w700 d-flex vcenter">
+            <i class="fas fa-arrow-left mr-2"></i> Back to Pages
+        </a>
+    </div>
+
+    <form id="page-edit-form" method="POST" action="/manage/pages/update/{{.Page.ID}}">
+        <div class="grix xs1 lg3 gutter-xs4">
+            <!-- Main Content -->
+            <div class="col-xs1 col-lg2">
+                <div class="card white shadow-1 rounded-1 p-4 mb-4">
+                    <h3 class="font-w800 font-s3 text-slate-900 mb-4 pb-3" style="border-bottom: 2px solid var(--color-slate-light-3);">Page Content</h3>
+                    <div class="form-field form-material mb-4">
+                        <input type="text" id="edit-name" name="name" value="{{.Page.Title}}" class="form-control font-w600" required />
+                        <label for="edit-name">Page Title</label>
+                    </div>
+                    <div class="form-field form-material mb-4">
+                        <input type="text" id="edit-slug" name="slug" value="{{.Page.Slug}}" class="form-control font-w600" required {{if .Page.IsSystem}}readonly{{end}} />
+                        <label for="edit-slug">URL Slug {{if .Page.IsSystem}}<span class="text-grey font-s1">(system page — slug locked)</span>{{end}}</label>
+                    </div>
+                    <div class="form-field mb-4">
+                        <label class="font-w700 font-s2 text-slate-700 mb-2 d-block">Page Body (Rich Text)</label>
+                        
+                        <div id="toolbar-container">
+                            <span class="ql-formats">
+                                <select class="ql-header">
+                                    <option value="1"></option>
+                                    <option value="2"></option>
+                                    <option value="3"></option>
+                                    <option selected></option>
+                                </select>
+                            </span>
+                            <span class="ql-formats">
+                                <button class="ql-bold"></button>
+                                <button class="ql-italic"></button>
+                                <button class="ql-underline"></button>
+                                <button class="ql-strike"></button>
+                            </span>
+                            <span class="ql-formats">
+                                <button class="ql-list" value="ordered"></button>
+                                <button class="ql-list" value="bullet"></button>
+                                <button class="ql-blockquote"></button>
+                            </span>
+                            <span class="ql-formats">
+                                <button class="ql-link"></button>
+                                <button class="ql-image"></button>
+                            </span>
+                            <span class="ql-formats">
+                                <button class="ql-clean"></button>
+                            </span>
+                        </div>
+                        <div id="page-quill-editor" style="min-height: 500px; border: 1px solid #ddd; border-radius: 0 0 4px 4px;"></div>
+                        <textarea id="content-input" name="content" style="display:none;">{{.Page.Content}}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-xs1 col-lg1">
+                <div class="card white shadow-1 rounded-1 p-4">
+                    <h3 class="font-w800 font-s3 text-slate-900 mb-4 pb-3" style="border-bottom: 2px solid var(--color-slate-light-3);">Publish</h3>
+                    {{if .Page.IsSystem}}
+                    <div class="tag blue-light-4 text-blue font-w700 font-s1 rounded-2 mb-4 d-block text-center">System Page</div>
+                    {{else}}
+                    <div class="tag green-light-4 text-green-dark-2 font-w700 font-s1 rounded-2 mb-4 d-block text-center">Custom Page</div>
+                    {{end}}
+                    <button type="submit" class="btn blue rounded-1 shadow-1 font-w800 d-block" style="width:100%;">
+                        <i class="fas fa-save mr-2"></i> Save Changes
+                    </button>
+                    {{if not .Page.IsSystem}}
+                    <a href="/manage/pages/delete/{{.Page.ID}}" class="btn red-light-4 text-red rounded-1 shadow-0 font-w700 d-block mt-3" style="width:100%; text-align:center;" onclick="return confirm('Delete this page?')">
+                        <i class="fas fa-trash mr-2"></i> Delete Page
+                    </a>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Quill Scripts -->
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<style>
+    .ql-editor {
+        min-height: 500px;
+        font-family: 'Inter', sans-serif;
+        font-size: 16px;
+    }
+    /* Quill Image Resize handles */
+    .ql-editor img {
+        cursor: pointer;
+    }
+    .ql-image-resizer {
+        z-index: 1000;
+    }
+</style>
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<!-- Image Resize Module -->
+<script src="https://cdn.jsdelivr.net/npm/quill-image-resize-module@3.0.0/image-resize.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const textarea = document.getElementById('content-input');
+    const editorDiv = document.getElementById('page-quill-editor');
+
+    // Setup window.Quill for the module
+    window.Quill = Quill;
+
+    // Register ImageResize only if not already registered
+    if (window.ImageResize && !Quill.imports['modules/imageResize']) {
+        Quill.register('modules/imageResize', window.ImageResize.default || window.ImageResize);
+    }
+
+    const quill = new Quill(editorDiv, {
+        theme: 'snow',
+        modules: {
+            toolbar: {
+                container: '#toolbar-container',
+                handlers: {
+                    image: imageHandler
+                }
+            },
+            imageResize: {
+                displaySize: true
+            }
+        }
+    });
+
+    // Load initial content
+    if (textarea.value) {
+        quill.root.innerHTML = textarea.value;
+    }
+
+    // Custom Image Handler for uploads
+    function imageHandler() {
+        const input = document.createElement('input');
+        input.setAttribute('type', 'file');
+        input.setAttribute('accept', 'image/*');
+        input.click();
+
+        input.onchange = async () => {
+            const file = input.files[0];
+            const formData = new FormData();
+            formData.append('upload', file);
+
+            // Show loading placeholder
+            const range = quill.getSelection(true);
+            
+            try {
+                const res = await fetch('/api/upload/image', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.url) {
+                    quill.insertEmbed(range.index, 'image', data.url);
+                }
+            } catch (err) {
+                console.error('Upload failed', err);
+            }
+        };
+    }
+
+    // Sync content
+    quill.on('text-change', () => {
+        textarea.value = quill.root.innerHTML;
+    });
+
+    document.getElementById('page-edit-form').addEventListener('submit', () => {
+        textarea.value = quill.root.innerHTML;
+    });
+});
+</script>
+{{end}}

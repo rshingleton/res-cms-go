@@ -1,32 +1,37 @@
 # ResCMS Go Handoff
 
-## Project Status: STABLE (v2.0.0)
+## Project Status: STABLE (v2.1.0)
 
-ResCMS Go has been fully migrated to a Go backend and stabilized for production editorial use. The system is lightweight, fast, and features a modular theme engine.
+ResCMS Go has been fully migrated to a Go backend and stabilized for production editorial use. The system features a robust, unified "Super Editor" and a modular theme engine.
 
 ## 🛠 Technical Stack
 - **Backend**: Go 1.22+ (using standard `http.ServeMux` with path values).
-- **Database**: SQLite (`res-cms.db`).
+- **Database**: SQLite (`rescms.db`).
 - **Editor**: Quill with custom Image Resize and Server Upload handlers.
-- **Frontend**: Alpine.js for reactivity, Tailwind CSS for Admin, Axentix for Themes.
-- **Theme Engine**: Dynamic template loader with hot-reload in development.
+- **Frontend**: Alpine.js (with Collapse plugin) for reactivity, Tailwind CSS for Admin, Axentix for Themes.
+- **Theme Engine**: Dynamic template loader with automated CSS/JS/HTML injection.
 
 ## 🔑 Key Features & Operations
 - **Admin Dashboard**: Accessible at `/manage`.
+- **Super Editor** (`/manage/editor`):
+    - **Note: We are still actively working on refining the theme editor experience.**
+    - Edit files from any installed theme via the unified sidebar library.
+    - Manage global site injectables (Header JS, Custom CSS, etc.) with automated `<script>` and `<style>` wrapping.
+    - Enable/Disable global customizations instantly via UI toggles.
 - **Theme Management**: 
-    - Edit theme files directly via the Monaco-based Editor.
-    - Copy existing themes via the "Copy" action in the Theme list.
-- **Media**: Images uploaded via the editor are saved to `/public/uploads/`. The `/api/upload/image` endpoint is protected by Auth middleware.
+    - Duplicate themes with custom names via modal.
+    - ZIP export and upload functionality.
+- **Media**: Images uploaded via the editor are saved to `/public/uploads/`.
 
 ## ⚠️ Important Implementation Details
-- **Pages as Categories**: The system uses the `models.Page` model for both standalone pages and article classifications. Non-system pages are listed as "Pages" in the Article sidebar.
-- **JSON Injection**: Use the `| js` template filter when injecting Go models into Alpine.js `x-init` or other scripts to avoid syntax errors.
-- **Asset Paths**: Use `/themes/[theme-name]/` for theme assets and `/static/` for shared CMS assets.
+- **Automated Injections**: Raw CSS/JS entered in the Super Editor is automatically wrapped in tags. Do not add manual `<style>` or `<script>` tags in the "Global Injections" section.
+- **Pages as Categories**: The system uses `models.Page` for both standalone pages and categories.
+- **JSON Injection**: Use the `| json` or `| js` template filters when injecting Go models into scripts.
 
 ## 🗺 Critical Path for Next Development
 1. **Media Library**: Build a dedicated file browser in the admin panel to manage existing uploads.
-2. **Theme Packaging**: Implement ZIP export and ZIP upload for themes.
-3. **Revision History**: Add a table to track content versions and allow rollbacks.
+2. **Revision History**: Add a table to track content versions and allow rollbacks.
+3. **Advanced Editor Features**: Implement search-and-replace and multi-file tabs in the Super Editor.
 
 ## 🚀 Running the Project
 ```bash

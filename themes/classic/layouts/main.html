@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title x-data x-text="$store.app.siteName"></title>
+    <title>{{.res_blog_name}}</title>
+    {{if .res_meta_desc}}<meta name="description" content="{{.res_meta_desc}}">{{end}}
     
     <!-- Axentix CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/axentix@2.3.0/dist/axentix.min.css">
@@ -20,6 +21,20 @@
         [x-cloak] { display: none !important; }
         body { font-family: 'Outfit', sans-serif; }
     </style>
+    {{.res_custom_css_style}}
+
+    {{if .res_ga_id}}
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{.res_ga_id}}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '{{.res_ga_id}}');
+    </script>
+    {{end}}
+
+    {{.res_custom_header_html_parsed}}
 </head>
 <body class="layout">
     {{template "partials/header.html" .}}
@@ -30,13 +45,17 @@
 
     {{template "partials/footer.html" .}}
 
+    {{.res_custom_footer_html_parsed}}
+
     <!-- Axentix JS -->
     <script src="https://cdn.jsdelivr.net/npm/axentix@2.3.0/dist/axentix.min.js"></script>
+
+    {{.res_custom_js_script}}
 
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.store('app', {
-                siteName: '{{.BlogName}}',
+                siteName: '{{.res_blog_name}}',
                 sidebar: {{.Sidebar | js}},
                 notifications: [],
                 notify(message, type = 'info') {
@@ -48,28 +67,6 @@
                 }
             });
         });
-        
-        function postsList() {
-            return {
-                posts: [],
-                loading: true,
-                init() {
-                    this.fetchPosts();
-                },
-                async fetchPosts() {
-                    this.loading = true;
-                    try {
-                        const res = await fetch('/api/v1/posts');
-                        const data = await res.json();
-                        this.posts = data.posts || [];
-                    } catch (e) {
-                        console.error(e);
-                    } finally {
-                        this.loading = false;
-                    }
-                }
-            }
-        }
     </script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 {{define "content"}}
-<div x-data="postEditor()" x-init="init({{.Entry | js}}, {{.Categories | js}}, {{.Tags | js}})" class="grix xs1 gutter-xs4" style="width: 100%;">
+<div x-data="postEditor()" x-init="init({{.Entry | js}}, {{.Pages | js}}, {{.Tags | js}})" class="grix xs1 gutter-xs4" style="width: 100%;">
     <!-- Header -->
     <div class="d-flex fx-row fx-space-between vcenter mb-2">
         <div>
@@ -73,10 +73,10 @@
                 <div class="form-field mb-4">
                     <label class="font-w700 font-s1 text-slate-700 mb-2 d-block">Pages</label>
                     <div class="d-flex fx-wrap g-gap-2">
-                        <template x-for="cat in categories" :key="cat.id">
+                        <template x-for="cat in pages" :key="cat.id">
                             <label class="d-flex vcenter cursor-pointer p-2 rounded-1 border-all-1 transition-all"
-                                   :class="selectedCategories.includes(cat.id) ? 'bg-blue-light-5 border-blue text-blue' : 'bg-white border-slate-light-4 text-slate-700'">
-                                <input type="checkbox" :value="cat.id" x-model="selectedCategories" class="hidden" @change="queueSave()">
+                                   :class="selectedPages.includes(cat.id) ? 'bg-blue-light-5 border-blue text-blue' : 'bg-white border-slate-light-4 text-slate-700'">
+                                <input type="checkbox" :value="cat.id" x-model="selectedPages" class="hidden" @change="queueSave()">
                                 <span x-text="cat.title || cat.name || cat.entry_title" class="font-w700 font-s1"></span>
                             </label>
                         </template>
@@ -126,7 +126,7 @@
 function postEditor() {
     return {
         post: { id: 0, entry_title: '', slug: '', content: '', status: 'draft' },
-        categories: [], tags: [], selectedCategories: [], selectedTags: [],
+        pages: [], tags: [], selectedPages: [], selectedTags: [],
         saving: false, lastSaved: null, saveTimeout: null,
         quill: null,
 
@@ -140,10 +140,10 @@ function postEditor() {
                 this.post.content = entry.content || '';
                 this.post.status = entry.status || 'draft';
                 
-                this.selectedCategories = (entry.pages || []).map(c => c.id);
+                this.selectedPages = (entry.pages || []).map(c => c.id);
                 this.selectedTags = (entry.tags || []).map(t => t.id);
             }
-            this.categories = allCategories || [];
+            this.pages = allCategories || [];
             this.tags = allTags || [];
 
             this.$nextTick(() => {
@@ -229,7 +229,7 @@ function postEditor() {
                     slug: this.post.slug,
                     content: this.post.content,
                     status: this.post.status,
-                    categories: this.selectedCategories.map(id => parseInt(id)),
+                    pages: this.selectedPages.map(id => parseInt(id)),
                     tags: this.selectedTags.map(id => parseInt(id))
                 };
                 const res = await fetch('/api/admin/posts/save', {
