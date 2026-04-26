@@ -25,7 +25,7 @@ All notable changes to this project will be documented in this file.
 
 ### Housekeeping
 - **Repository Hygiene**: Updated `.gitignore` to exclude `*.db`, SQLite journal files, and binary build artifacts.
-- **Remnant Cleanup**: Removed obsolete `migrate-categories` command and various development/test remnants from the root directory (`test_template.go`, `editor_test.html`, `cookie.txt`, etc.).
+- **Remnant Cleanup**: Removed obsolete `migrate-categories` command and various development/test remnants (`test_template.go`, `editor_test.html`, `cookie.txt`, `public/js/app.js`, etc.).
 - **Untracked Binaries**: Removed local build artifacts (the `res-cms` binary) and database files from the repository's tracked index.
 
 ## [2.1.0] - 2026-04-26 (Editor Stability & Monaco Fixes)
