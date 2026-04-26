@@ -16,7 +16,7 @@ func setupTestDB(t *testing.T) (*gorm.DB, func()) {
 	}
 
 	// Migrate schemas
-	err = db.AutoMigrate(&User{}, &Entry{}, &Page{}, &Tag{}, &Comment{}, &SiteSetting{})
+	err = db.AutoMigrate(&User{}, &Post{}, &Page{}, &Tag{}, &Comment{}, &SiteSetting{})
 	if err != nil {
 		t.Fatalf("failed to migrate: %v", err)
 	}
@@ -32,7 +32,7 @@ func setupTestDB(t *testing.T) (*gorm.DB, func()) {
 	return db, cleanup
 }
 
-func TestEntryCreation(t *testing.T) {
+func TestPostCreation(t *testing.T) {
 	db, cleanup := setupTestDB(t)
 	defer cleanup()
 
@@ -65,9 +65,9 @@ func TestEntryCreation(t *testing.T) {
 	}
 
 	// Create entry
-	entry := Entry{
+	entry := Post{
 		AccountID:  user.ID,
-		EntryTitle: "Hello World",
+		Title: "Hello World",
 		Slug:       "hello-world",
 		Content:    "This is a test post.",
 		Status:     "published",
@@ -80,25 +80,25 @@ func TestEntryCreation(t *testing.T) {
 	}
 
 	// Verify entry exists and associations work
-	var fetchedEntry Entry
-	err := db.Preload("Author").Preload("Pages").Preload("Tags").First(&fetchedEntry, entry.ID).Error
+	var fetchedPost Post
+	err := db.Preload("Author").Preload("Pages").Preload("Tags").First(&fetchedPost, entry.ID).Error
 	if err != nil {
 		t.Fatalf("failed to fetch entry: %v", err)
 	}
 
-	if fetchedEntry.EntryTitle != "Hello World" {
-		t.Errorf("expected title Hello World, got %s", fetchedEntry.EntryTitle)
+	if fetchedPost.Title != "Hello World" {
+		t.Errorf("expected title Hello World, got %s", fetchedPost.Title)
 	}
 
-	if len(fetchedEntry.Pages) != 1 || fetchedEntry.Pages[0].Title != "Tech" {
+	if len(fetchedPost.Pages) != 1 || fetchedPost.Pages[0].Title != "Tech" {
 		t.Errorf("page association failed")
 	}
 
-	if len(fetchedEntry.Tags) != 1 || fetchedEntry.Tags[0].Name != "Go" {
+	if len(fetchedPost.Tags) != 1 || fetchedPost.Tags[0].Name != "Go" {
 		t.Errorf("tag association failed")
 	}
 
-	if fetchedEntry.Author.Username != "testuser" {
+	if fetchedPost.Author.Username != "testuser" {
 		t.Errorf("author association failed")
 	}
 }
@@ -108,15 +108,15 @@ func TestCommentCreation(t *testing.T) {
 	defer cleanup()
 
 	// Create entry first
-	entry := Entry{
+	entry := Post{
 		AccountID:  1,
-		EntryTitle: "Post for comments",
+		Title: "Post for comments",
 		Slug:       "post-for-comments",
 	}
 	db.Create(&entry)
 
 	comment := Comment{
-		EntryID: entry.ID,
+		PostID: entry.ID,
 		Author:  "John Doe",
 		Content: "Nice post!",
 		Status:  "approved",
@@ -133,7 +133,7 @@ func TestCommentCreation(t *testing.T) {
 		t.Errorf("expected author John Doe, got %s", fetchedComment.Author)
 	}
 
-	if fetchedComment.Post.EntryTitle != "Post for comments" {
+	if fetchedComment.Post.Title != "Post for comments" {
 		t.Errorf("comment to post association failed")
 	}
 }

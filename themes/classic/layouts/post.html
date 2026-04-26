@@ -7,30 +7,30 @@
             <!-- Meta bar -->
             <div class="d-flex fx-row fx-space-between vcenter mb-4 pb-3" style="border-bottom: 1px solid #eee;">
                 <span class="tag blue-light-4 text-blue font-w700 font-s1 rounded-2 uppercase">
-                    {{if .Entry.Pages}}{{range $i, $p := .Entry.Pages}}{{if $i}}, {{end}}{{$p.Title}}{{end}}{{else}}General{{end}}
+                    {{if .Post.Pages}}{{range $i, $p := .Post.Pages}}{{if $i}}, {{end}}{{$p.Title}}{{end}}{{else}}General{{end}}
                 </span>
-                <span class="text-grey font-s1">{{.Entry.CreatedAt.Format "Jan 02, 2006"}}</span>
+                <span class="text-grey font-s1">{{.Post.CreatedAt.Format "Jan 02, 2006"}}</span>
             </div>
 
             <!-- Title -->
-            <h1 class="font-w900 font-s6 text-slate-900 mb-4 leading-tight">{{.Entry.EntryTitle}}</h1>
+            <h1 class="font-w900 font-s6 text-slate-900 mb-4 leading-tight">{{.Post.Title}}</h1>
 
             <!-- Author line -->
             <div class="d-flex vcenter mb-5 pb-4" style="border-bottom: 2px solid #f0f0f0;">
                 <span class="text-grey font-s1 mr-2">By</span>
-                <span class="font-w700 font-s2 text-slate-900">{{if .Entry.Author.Username}}{{.Entry.Author.Username}}{{else}}Admin{{end}}</span>
+                <span class="font-w700 font-s2 text-slate-900">{{if .Post.Author.Username}}{{.Post.Author.Username}}{{else}}Admin{{end}}</span>
             </div>
 
             <!-- Content -->
             <div class="font-s2" style="line-height: 1.9; color: #333;">
-                {{.Entry.Content | safeHTML}}
+                {{.Post.Content | safeHTML}}
             </div>
 
             <!-- Tags -->
-            {{if .Entry.Tags}}
+            {{if .Post.Tags}}
             <div class="d-flex fx-row fx-wrap g-gap-2 mt-5 pt-4" style="border-top: 1px solid #eee;">
-                {{range .Entry.Tags}}
-                <a href="/entries/tag/{{.Slug}}" class="tag grey-light-4 text-grey-dark-2 font-w600 font-s1 rounded-2">#{{.Name}}</a>
+                {{range .Post.Tags}}
+                <a href="/posts/tag/{{.Slug}}" class="tag grey-light-4 text-grey-dark-2 font-w600 font-s1 rounded-2">#{{.Name}}</a>
                 {{end}}
             </div>
             {{end}}
@@ -40,13 +40,13 @@
         <div class="card white p-5 shadow-1">
             <h3 class="font-w900 font-s4 text-slate-900 mb-4 pb-3" style="border-bottom: 2px solid #eee;">
                 Comments
-                <span class="text-grey font-s2 font-w600 ml-2">({{if .Entry.Comments}}{{len .Entry.Comments}}{{else}}0{{end}})</span>
+                <span class="text-grey font-s2 font-w600 ml-2">({{if .Post.Comments}}{{len .Post.Comments}}{{else}}0{{end}})</span>
             </h3>
             <div>
-                {{if not .Entry.Comments}}
+                {{if not .Post.Comments}}
                     <p class="text-grey font-s2">No comments yet. Be the first to comment!</p>
                 {{else}}
-                    {{range .Entry.Comments}}
+                    {{range .Post.Comments}}
                     <div class="mb-4 pb-4" style="border-bottom: 1px solid #f0f0f0;">
                         <div class="d-flex fx-space-between vcenter mb-2">
                             <span class="font-w700 font-s2 text-slate-900">{{.Author}}</span>
@@ -60,7 +60,7 @@
 
             <!-- Comment form -->
             <form method="POST" action="/comment/add" class="mt-4">
-                <input type="hidden" name="post_id" value="{{.Entry.ID}}">
+                <input type="hidden" name="post_id" value="{{.Post.ID}}">
                 <div class="form-field form-material mb-3">
                     <input type="text" id="comment-author" name="author" class="form-control font-w600" required />
                     <label for="comment-author">Your Name</label>
@@ -84,11 +84,11 @@
                 <ul style="list-style: none; padding: 0; margin: 0;">
                     {{range .Sidebar.Recent}}
                     <li style="border-bottom: 1px solid #f0f0f0;">
-                        <a href="/entry/{{.Slug}}"
+                        <a href="/post/{{.Slug}}"
                            class="d-block px-4 py-3 hover-bg-slate-light-5 transition-all"
                            style="text-decoration: none; color: inherit;">
                             <div class="d-flex fx-space-between vcenter">
-                                <div class="font-w700 font-s2 text-slate-900" style="line-height: 1.4;">{{.EntryTitle}}</div>
+                                <div class="font-w700 font-s2 text-slate-900" style="line-height: 1.4;">{{.Title}}</div>
                                 <div class="text-grey font-s1 ml-2">{{.CreatedAt.Format "Jan 02"}}</div>
                             </div>
                         </a>

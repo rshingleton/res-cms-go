@@ -109,7 +109,7 @@ func getDirFromDSN(dsn string) string {
 func migrate() error {
 	return DB.AutoMigrate(
 		&models.User{},
-		&models.Entry{},
+		&models.Post{},
 		&models.Page{},
 		&models.Tag{},
 		&models.Comment{},

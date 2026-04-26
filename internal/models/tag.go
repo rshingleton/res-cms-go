@@ -13,7 +13,7 @@ type Tag struct {
 	UpdatedAt time.Time `json:"updated_at"`
 
 	// Associations
-	Entries []Entry `gorm:"many2many:entry_tags;" json:"entries,omitempty"`
+	Posts []Post `gorm:"many2many:post_tags;" json:"posts,omitempty"`
 }
 
 // TableName overrides the table name

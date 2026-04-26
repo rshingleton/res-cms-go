@@ -1,13 +1,13 @@
 {{define "content"}}
-<div x-data="postEditor()" x-init="init({{.Entry | js}}, {{.Pages | js}}, {{.Tags | js}})" class="grix xs1 gutter-xs4" style="width: 100%;">
+<div x-data="postEditor()" x-init="init({{.Post | js}}, {{.Pages | js}}, {{.Tags | js}})" class="grix xs1 gutter-xs4" style="width: 100%;">
     <!-- Header -->
     <div class="d-flex fx-row fx-space-between vcenter mb-2">
         <div>
-            <h1 class="font-w900 font-s6 text-slate-900 mb-1" x-text="post.id === 0 ? 'Create Article' : 'Edit Article'"></h1>
+            <h1 class="font-w900 font-s6 text-slate-900 mb-1" x-text="post.id === 0 ? 'Create Post' : 'Edit Post'"></h1>
             <p class="text-grey font-s2 mb-0" x-text="post.id === 0 ? 'Draft a new story for your audience.' : 'Update your published content.'"></p>
         </div>
         <div class="d-flex g-gap-2">
-            <a href="/manage/entries" class="btn white text-slate-700 shadow-1 rounded-1 font-w700">
+            <a href="/manage/posts" class="btn white text-slate-700 shadow-1 rounded-1 font-w700">
                 <i class="fas fa-arrow-left mr-2"></i> Dashboard
             </a>
             <button @click="submitPost(false)" class="btn blue rounded-1 shadow-1 font-w900" :disabled="saving">
@@ -22,8 +22,8 @@
         <div class="col-xs1 col-lg2">
             <div class="card white shadow-1 rounded-1 p-4 mb-4">
                 <div class="form-field form-material mb-4">
-                    <input type="text" id="post-title" x-model="post.entry_title" @input="updateSlug" class="form-control font-w800 font-s4 text-slate-900" placeholder="Enter title..." required />
-                    <label for="post-title">Article Title</label>
+                    <input type="text" id="post-title" x-model="post.title" @input="updateSlug" class="form-control font-w800 font-s4 text-slate-900" placeholder="Enter title..." required />
+                    <label for="post-title">Post Title</label>
                 </div>
 
                 <div class="form-field form-material mb-4">
@@ -31,7 +31,7 @@
                     <label for="post-slug">URL Slug</label>
                 </div>
 
-                <!-- Quill Editor for Articles -->
+                <!-- Quill Editor for Posts -->
                 <div class="form-field mb-4">
                     <div id="toolbar-container">
                         <span class="ql-formats">
@@ -50,16 +50,16 @@
                             <button class="ql-clean"></button>
                         </span>
                     </div>
-                    <div id="article-quill-editor" style="min-height: 600px; border: 1px solid #ddd; border-radius: 0 0 4px 4px;"></div>
+                    <div id="post-quill-editor" style="min-height: 600px; border: 1px solid #ddd; border-radius: 0 0 4px 4px;"></div>
                 </div>
-                <textarea id="post-content-data" style="display:none;">{{.Entry.Content}}</textarea>
+                <textarea id="post-content-data" style="display:none;">{{.Post.Content}}</textarea>
             </div>
         </div>
 
         <!-- Sidebar Pane -->
         <div class="col-xs1 col-lg1">
             <div class="card white shadow-1 rounded-1 p-4 mb-4">
-                <h3 class="font-w800 font-s2 text-slate-900 mb-4 pb-2 border-bottom-1 border-slate-light-4">Article Settings</h3>
+                <h3 class="font-w800 font-s2 text-slate-900 mb-4 pb-2 border-bottom-1 border-slate-light-4">Post Settings</h3>
                 
                 <div class="form-field mb-4">
                     <label class="font-w700 font-s1 text-slate-700 mb-2 d-block">Status</label>
@@ -71,13 +71,18 @@
                 </div>
 
                 <div class="form-field mb-4">
+                    <label class="font-w700 font-s1 text-slate-700 mb-2 d-block">Published Date</label>
+                    <input type="datetime-local" x-model="post.created_at" class="form-control rounded-1" @change="queueSave()">
+                </div>
+
+                <div class="form-field mb-4">
                     <label class="font-w700 font-s1 text-slate-700 mb-2 d-block">Pages</label>
                     <div class="d-flex fx-wrap g-gap-2">
                         <template x-for="cat in pages" :key="cat.id">
                             <label class="d-flex vcenter cursor-pointer p-2 rounded-1 border-all-1 transition-all"
                                    :class="selectedPages.includes(cat.id) ? 'bg-blue-light-5 border-blue text-blue' : 'bg-white border-slate-light-4 text-slate-700'">
                                 <input type="checkbox" :value="cat.id" x-model="selectedPages" class="hidden" @change="queueSave()">
-                                <span x-text="cat.title || cat.name || cat.entry_title" class="font-w700 font-s1"></span>
+                                <span x-text="cat.title || cat.name || cat.title" class="font-w700 font-s1"></span>
                             </label>
                         </template>
                     </div>
@@ -90,7 +95,7 @@
                             <div @click="toggleTag(tag.id)" 
                                  class="tag cursor-pointer transition-all font-w700 font-s1 rounded-2"
                                  :class="selectedTags.includes(tag.id) ? 'blue text-white' : 'grey light-4 text-slate-700'">
-                                #<span x-text="tag.entry_title || tag.name"></span>
+                                #<span x-text="tag.title || tag.name"></span>
                             </div>
                         </template>
                     </div>
@@ -125,7 +130,7 @@
 <script>
 function postEditor() {
     return {
-        post: { id: 0, entry_title: '', slug: '', content: '', status: 'draft' },
+        post: { id: 0, title: '', slug: '', content: '', status: 'draft', created_at: '' },
         pages: [], tags: [], selectedPages: [], selectedTags: [],
         saving: false, lastSaved: null, saveTimeout: null,
         quill: null,
@@ -135,10 +140,16 @@ function postEditor() {
             if (entry && entry.id) {
                 // Ensure correct field mapping from Go JSON
                 this.post.id = entry.id;
-                this.post.entry_title = entry.entry_title || '';
+                this.post.title = entry.title || '';
                 this.post.slug = entry.slug || '';
                 this.post.content = entry.content || '';
                 this.post.status = entry.status || 'draft';
+                if (entry.created_at) {
+                    // Convert RFC3339 to datetime-local format (YYYY-MM-DDThh:mm)
+                    const d = new Date(entry.created_at);
+                    const pad = (n) => n.toString().padStart(2, '0');
+                    this.post.created_at = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                }
                 
                 this.selectedPages = (entry.pages || []).map(c => c.id);
                 this.selectedTags = (entry.tags || []).map(t => t.id);
@@ -157,7 +168,7 @@ function postEditor() {
                 Quill.register('modules/imageResize', window.ImageResize.default || window.ImageResize);
             }
 
-            this.quill = new Quill('#article-quill-editor', {
+            this.quill = new Quill('#post-quill-editor', {
                 theme: 'snow',
                 modules: {
                     toolbar: {
@@ -198,7 +209,7 @@ function postEditor() {
 
         updateSlug() {
             if (this.post.id === 0 || !this.post.slug) {
-                this.post.slug = this.post.entry_title.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-');
+                this.post.slug = this.post.title.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-');
             }
         },
 
@@ -225,10 +236,11 @@ function postEditor() {
             try {
                 const payload = {
                     id: this.post.id,
-                    title: this.post.entry_title,
+                    title: this.post.title,
                     slug: this.post.slug,
                     content: this.post.content,
                     status: this.post.status,
+                    created_at: this.post.created_at ? new Date(this.post.created_at).toISOString() : null,
                     pages: this.selectedPages.map(id => parseInt(id)),
                     tags: this.selectedTags.map(id => parseInt(id))
                 };
@@ -242,7 +254,7 @@ function postEditor() {
                     if (!isAutoSave) Alpine.store('app').notify('Post saved successfully', 'success');
                     if (this.post.id === 0) {
                         this.post.id = data.id;
-                        window.history.pushState({}, '', `/manage/entries/edit/${data.id}`);
+                        window.history.pushState({}, '', `/manage/posts/edit/${data.id}`);
                     }
                     this.lastSaved = new Date();
                 }

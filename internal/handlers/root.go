@@ -52,10 +52,10 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	perPage := 10
 
 	// Query entries
-	var entries []models.Entry
+	var entries []models.Post
 	var total int64
 
-	db.DB.Model(&models.Entry{}).Where("status = ?", "published").Count(&total)
+	db.DB.Model(&models.Post{}).Where("status = ?", "published").Count(&total)
 
 	offset := (page - 1) * perPage
 	if err := db.DB.Preload("Author").Preload("Pages").Preload("Tags").
@@ -91,7 +91,7 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Render template
 	data := map[string]interface{}{
-		"Entries":     entries,
+		"Posts":       entries,
 		"BlogName":    blogName,
 		"LayoutStyle": layoutStyle,
 		"Sidebar":     sidebar,
@@ -122,7 +122,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var entry models.Entry
+	var entry models.Post
 	if err := db.DB.Preload("Author").Preload("Pages").Preload("Tags").
 		Preload("Comments", "status = ?", "approved").
 		Preload("Comments.Post"). // Need to update Comment model next
@@ -148,7 +148,7 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	sidebar := getSidebarData()
 
 	data := map[string]interface{}{
-		"Entry":    entry,
+		"Post":     entry,
 		"BlogName": blogName,
 		"Sidebar":  sidebar,
 		"User":     middleware.OptionalUser(r),
@@ -226,7 +226,7 @@ func AddCommentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	comment := models.Comment{
-		EntryID: uint(postID),
+		PostID:  uint(postID),
 		Author:  author,
 		Email:   email,
 		Content: content,
@@ -257,10 +257,10 @@ func PostsByPageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var entries []models.Entry
-	if err := db.DB.Joins("JOIN entry_pages ON entries.id = entry_pages.entry_id").
-		Where("entry_pages.page_id = ? AND entries.status = ?", p.ID, "published").
-		Order("entries.created_at DESC").
+	var entries []models.Post
+	if err := db.DB.Joins("JOIN post_pages ON posts.id = post_pages.post_id").
+		Where("post_pages.page_id = ? AND posts.status = ?", p.ID, "published").
+		Order("posts.created_at DESC").
 		Preload("Author").
 		Find(&entries).Error; err != nil {
 		log.Printf("Error fetching entries: %v", err)
@@ -276,7 +276,7 @@ func PostsByPageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]interface{}{
-		"Entries":  entries,
+		"Posts":    entries,
 		"BlogName": blogName,
 		"Page":     p,
 		"User":     middleware.OptionalUser(r),
@@ -302,10 +302,10 @@ func PostsByTagHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var entries []models.Entry
-	if err := db.DB.Joins("JOIN entry_tags ON entries.id = entry_tags.entry_id").
-		Where("entry_tags.tag_id = ? AND entries.status = ?", t.ID, "published").
-		Order("entries.created_at DESC").
+	var entries []models.Post
+	if err := db.DB.Joins("JOIN post_tags ON posts.id = post_tags.post_id").
+		Where("post_tags.tag_id = ? AND posts.status = ?", t.ID, "published").
+		Order("posts.created_at DESC").
 		Preload("Author").
 		Find(&entries).Error; err != nil {
 		log.Printf("Error fetching entries: %v", err)
@@ -321,7 +321,7 @@ func PostsByTagHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]interface{}{
-		"Entries":  entries,
+		"Posts":    entries,
 		"BlogName": blogName,
 		"Tag":      t,
 		"User":     middleware.OptionalUser(r),
@@ -337,7 +337,7 @@ func PostsByTagHandler(w http.ResponseWriter, r *http.Request) {
 func LatestPostsAPIHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	var entries []models.Entry
+	var entries []models.Post
 	if err := db.DB.Preload("Author").
 		Where("status = ?", "published").
 		Order("created_at DESC").
@@ -350,15 +350,15 @@ func LatestPostsAPIHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Simple JSON output
 	if len(entries) > 0 {
-		w.Write([]byte(`[{"title":"` + entries[0].EntryTitle + `"}]`))
+		w.Write([]byte(`[{"title":"` + entries[0].Title + `"}]`))
 	} else {
 		w.Write([]byte(`[]`))
 	}
 }
 
-// EntriesByAccountHandler handles filtered posts by account
-func EntriesByAccountHandler(w http.ResponseWriter, r *http.Request) {
-	accountName := strings.TrimPrefix(r.URL.Path, "/entries/account/")
+// PostsByAccountHandler handles filtered posts by account
+func PostsByAccountHandler(w http.ResponseWriter, r *http.Request) {
+	accountName := strings.TrimPrefix(r.URL.Path, "/posts/account/")
 	if accountName == "" {
 		http.NotFound(w, r)
 		return
@@ -383,10 +383,10 @@ func EntriesByAccountHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var entries []models.Entry
+	var entries []models.Post
 	var total int64
 
-	db.DB.Model(&models.Entry{}).Where("account_id = ? AND status = ?", account.ID, "published").Count(&total)
+	db.DB.Model(&models.Post{}).Where("account_id = ? AND status = ?", account.ID, "published").Count(&total)
 
 	offset := (page - 1) * perPage
 	if err := db.DB.Preload("Author").Preload("Pages").Preload("Tags").
@@ -411,12 +411,12 @@ func EntriesByAccountHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Render template
 	data := map[string]interface{}{
-		"Entries":           entries,
+		"Posts":             entries,
 		"BlogName":          blogName,
 		"Sidebar":           sidebar,
 		"Page":              page,
 		"TotalPages":        (total + int64(perPage) - 1) / int64(perPage),
-		"EntriesForAccount": accountName,
+		"PostsForAccount":   accountName,
 		"User":              middleware.OptionalUser(r),
 	}
 
@@ -432,24 +432,24 @@ func getSidebarData() map[string]interface{} {
 	var pages []models.Page
 	db.DB.Order("sort_order ASC, title ASC").Find(&pages)
 
-	var recent []models.Entry
-	db.DB.Select("slug, entry_title, created_at").
+	var recent []models.Post
+	db.DB.Select("slug, title, created_at").
 		Where("status = ?", "published").
 		Order("created_at DESC").
 		Limit(5).
 		Find(&recent)
 
-	var popular []models.Entry
+	var popular []models.Post
 	db.DB.Raw(`
-		SELECT p.slug, p.entry_title, p.created_at, (SELECT COUNT(*) FROM comments c WHERE c.entry_id = p.id) as cnt
-		FROM entries p WHERE p.status = 'published'
+		SELECT p.slug, p.title, p.created_at, (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as cnt
+		FROM posts p WHERE p.status = 'published'
 		ORDER BY cnt DESC LIMIT 5
 	`).Scan(&popular)
 
 	var tags []models.Tag
 	db.DB.Raw(`
 		SELECT t.* FROM tags t
-		JOIN (SELECT tag_id, COUNT(*) as cnt FROM entry_tags GROUP BY tag_id) pt
+		JOIN (SELECT tag_id, COUNT(*) as cnt FROM post_tags GROUP BY tag_id) pt
 		ON t.id = pt.tag_id
 		ORDER BY pt.cnt DESC
 	`).Scan(&tags)

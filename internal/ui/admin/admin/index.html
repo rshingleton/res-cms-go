@@ -2,11 +2,11 @@
 <div x-data="adminDashboard()" x-init="init()" x-cloak>
     
     <div class="grix xs1 sm2 md4 gutter-xs3 mb-4">
-        <!-- Articles -->
-        <a href="/manage/entries" class="no-underline text-slate-dark-3">
+        <!-- Posts -->
+        <a href="/manage/posts" class="no-underline text-slate-dark-3">
             <div class="card white shadow-1 hover-shadow-2 transition-all rounded-1 border-all-1 border-slate-light-4 h-100 p-3">
                 <div class="flex flex-row justify-between align-center mb-1">
-                    <span class="text-grey font-w800 font-s1 uppercase tracking-wider">Articles</span>
+                    <span class="text-grey font-w800 font-s1 uppercase tracking-wider">Posts</span>
                     <i class="fas fa-file-alt text-blue font-s3"></i>
                 </div>
                 <div class="flex flex-row justify-between align-end mt-2">
@@ -112,8 +112,8 @@
     <div class="grix xs1 gutter-xs3">
         <div class="card white shadow-1 rounded-1 border-all-1 border-slate-light-4">
             <div class="card-header flex flex-row justify-between align-center px-4 py-3 border-bottom-1 border-slate-light-4">
-                <span class="font-w900 text-slate-900 font-s2 uppercase tracking-widest">Latest Editorial Content</span>
-                <a href="/manage/entries" class="btn btn-small transparent text-blue font-w900 p-0">View Full List</a>
+                <span class="font-w900 text-slate-900 font-s2 uppercase tracking-widest">Latest Posts</span>
+                <a href="/manage/posts" class="btn btn-small transparent text-blue font-w900 p-0">View Full List</a>
             </div>
             <div class="card-content p-0">
                 <div class="grix xs1 sm2 md3 gutter-xs0">
@@ -125,7 +125,7 @@
                                      x-text="post.status"></span>
                                 <span class="text-grey-light-1 font-s1" x-text="new Date(post.created_at).toLocaleDateString()"></span>
                             </div>
-                            <h5 class="font-w900 font-s2 text-slate-900 mb-0 truncate" x-text="post.entry_title"></h5>
+                            <h5 class="font-w900 font-s2 text-slate-900 mb-0 truncate" x-text="post.title"></h5>
                         </div>
                     </template>
                 </div>

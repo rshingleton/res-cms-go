@@ -25,7 +25,7 @@ func setupHandlerTestDB(t *testing.T) func() {
 	}
 
 	// Migrate schemas
-	err = db.DB.AutoMigrate(&models.User{}, &models.Entry{}, &models.Page{}, &models.Tag{}, &models.Comment{}, &models.SiteSetting{})
+	err = db.DB.AutoMigrate(&models.User{}, &models.Post{}, &models.Page{}, &models.Tag{}, &models.Comment{}, &models.SiteSetting{})
 	if err != nil {
 		t.Fatalf("failed to migrate: %v", err)
 	}
@@ -34,9 +34,9 @@ func setupHandlerTestDB(t *testing.T) func() {
 	user := models.User{Username: "admin", Email: "admin@example.com", Role: "admin", IsAdmin: true}
 	db.DB.Create(&user)
 
-	post := models.Entry{
+	post := models.Post{
 		AccountID:  user.ID,
-		EntryTitle: "Test Post",
+		Title: "Test Post",
 		Slug:       "test-post",
 		Content:    "Content",
 		Status:     "published",
@@ -121,13 +121,13 @@ func TestAPIAdminSavePostHandler(t *testing.T) {
 	}
 
 	// Verify post was created in DB
-	var entry models.Entry
+	var entry models.Post
 	if err := db.DB.Where("slug = ?", "new-admin-post").First(&entry).Error; err != nil {
 		t.Errorf("post was not created in database")
 	}
 
-	if entry.EntryTitle != "New Admin Post" {
-		t.Errorf("expected title New Admin Post, got %s", entry.EntryTitle)
+	if entry.Title != "New Admin Post" {
+		t.Errorf("expected title New Admin Post, got %s", entry.Title)
 	}
 }
 
@@ -199,7 +199,7 @@ func TestAPIAdminDeletePostHandler(t *testing.T) {
 	cleanup := setupHandlerTestDB(t)
 	defer cleanup()
 
-	post := models.Entry{AccountID: 1, EntryTitle: "To delete", Slug: "to-delete"}
+	post := models.Post{AccountID: 1, Title: "To delete", Slug: "to-delete"}
 	db.DB.Create(&post)
 
 	// Route is /api/admin/posts/{id}
@@ -213,7 +213,7 @@ func TestAPIAdminDeletePostHandler(t *testing.T) {
 	}
 
 	var count int64
-	db.DB.Model(&models.Entry{}).Where("id = ?", 2).Count(&count)
+	db.DB.Model(&models.Post{}).Where("id = ?", 2).Count(&count)
 	if count != 0 {
 		t.Errorf("post was not deleted")
 	}

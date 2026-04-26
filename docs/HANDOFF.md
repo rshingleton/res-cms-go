@@ -24,13 +24,13 @@ ResCMS Go has been fully migrated to a Go backend and stabilized for production 
     - ZIP export and upload functionality.
 - **Theme Engine & SSR**: 
     - **SSR Migration**: Public themes (`Classic`, `Pixel Standard`) use Go Server-Side Rendering for all core content.
-    - Avoid using client-side `fetch` for basic article lists to ensure SEO and performance.
+    - Avoid using client-side `fetch` for basic post lists to ensure SEO and performance.
 - **Media**: Images uploaded via the editor are saved to `/public/uploads/`.
 
 ## 🔑 Site Refinements (v2.2.0)
 - **Widened Layout**: The main site container is set to 1400px to maximize screen usage.
 - **Sidebar Clarity**: Dates are right-justified and redundant category labels have been removed.
-- **Timestamp Accuracy**: Fixed backend queries and template formats to ensure correct article dates are displayed.
+- **Timestamp Accuracy**: Fixed backend queries and template formats to ensure correct post dates are displayed.
 
 ## 🗺 Critical Path for Next Development
 1. **Media Library**: Build a dedicated file browser in the admin panel to manage existing uploads.

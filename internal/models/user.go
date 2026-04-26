@@ -17,7 +17,7 @@ type User struct {
 	UpdatedAt time.Time `json:"updated_at"`
 
 	// Associations
-	Entries []Entry `gorm:"foreignKey:AccountID" json:"entries,omitempty"`
+	Posts []Post `gorm:"foreignKey:AccountID" json:"posts,omitempty"`
 }
 
 // TableName overrides the table name

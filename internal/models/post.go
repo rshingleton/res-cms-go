@@ -4,11 +4,11 @@ import (
 	"time"
 )
 
-// Entry represents a blog post
-type Entry struct {
+// Post represents a blog post
+type Post struct {
 	ID         uint      `gorm:"primaryKey" json:"id"`
 	AccountID  uint      `gorm:"not null" json:"account_id"`
-	EntryTitle string    `gorm:"size:255;not null" json:"entry_title"`
+	Title      string    `gorm:"size:255;not null" json:"title"`
 	Slug       string    `gorm:"uniqueIndex;size:255;not null" json:"slug"`
 	Content    string    `gorm:"type:text" json:"content"`
 	Status     string    `gorm:"default:draft" json:"status"`
@@ -17,12 +17,12 @@ type Entry struct {
 
 	// Associations
 	Author   User      `gorm:"foreignKey:AccountID" json:"author,omitempty"`
-	Pages    []Page    `gorm:"many2many:entry_pages;" json:"pages,omitempty"`
-	Tags     []Tag     `gorm:"many2many:entry_tags;" json:"tags,omitempty"`
-	Comments []Comment `gorm:"foreignKey:EntryID" json:"comments,omitempty"`
+	Pages    []Page    `gorm:"many2many:post_pages;" json:"pages,omitempty"`
+	Tags     []Tag     `gorm:"many2many:post_tags;" json:"tags,omitempty"`
+	Comments []Comment `gorm:"foreignKey:PostID" json:"comments,omitempty"`
 }
 
 // TableName overrides the table name
-func (Entry) TableName() string {
-	return "entries"
+func (Post) TableName() string {
+	return "posts"
 }

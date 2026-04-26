@@ -30,6 +30,8 @@ A centralized hub for all site-wide code modifications.
 - **Root Render Engine**: Optimized `renderTemplate` function that maps global settings to theme variables (`res_` prefix).
 
 ### 4. Database Models (`internal/models`)
+- **Post**: Represents a blog post or primary content item.
+- **Page**: Handles hierarchical grouping (categories) and static standalone pages.
 - **SiteSetting**: Stores all configuration and global customizations (CSS, JS, Header/Footer HTML).
 
 ## Project Structure

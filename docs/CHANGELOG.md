@@ -7,14 +7,14 @@ All notable changes to this project will be documented in this file.
 ### Added
 - **Server-Side Rendering (SSR) Migration**:
     - Refactored `Classic` and `Pixel Standard` themes from a broken client-side Alpine.js fetch pattern to native Go Server-Side Rendering.
-    - This ensures articles and sidebar content are rendered immediately, improving SEO and site reliability.
+    - This ensures posts and sidebar content are rendered immediately, improving SEO and site reliability.
 - **Enhanced Site Layout**:
     - Widened the main site container to 1400px (95% width) for better usage of modern screen space.
-    - Right-justified article dates in the "Recent Posts" sidebar for a more structured, professional appearance.
+    - Right-justified post dates in the "Recent Posts" sidebar for a more structured, professional appearance.
 
 ### Changed
 - **UI Cleanup**:
-    - Removed redundant "Articles" feed from the bottom of the home page.
+    - Removed redundant "Posts" feed from the bottom of the home page.
     - Removed the static "Main" category label from sidebar posts to reduce clutter.
     - Standardized date formatting across themes.
 

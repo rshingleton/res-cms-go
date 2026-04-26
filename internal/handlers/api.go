@@ -38,29 +38,29 @@ func APIListPostsHandler(w http.ResponseWriter, r *http.Request) {
 	tag := r.URL.Query().Get("tag")
 	search := r.URL.Query().Get("search")
 
-	query := db.DB.Model(&models.Entry{}).Where("LOWER(status) = ?", "published")
+	query := db.DB.Model(&models.Post{}).Where("LOWER(status) = ?", "published")
 
 	if pageSlug != "" {
-		query = query.Joins("JOIN entry_pages ON entries.id = entry_pages.entry_id").
-			Joins("JOIN pages ON pages.id = entry_pages.page_id").
+		query = query.Joins("JOIN post_pages ON posts.id = post_pages.post_id").
+			Joins("JOIN pages ON pages.id = post_pages.page_id").
 			Where("pages.slug = ?", pageSlug)
 	}
 
 	if tag != "" {
-		query = query.Joins("JOIN entry_tags ON entries.id = entry_tags.entry_id").
-			Joins("JOIN tags ON tags.id = entry_tags.tag_id").
+		query = query.Joins("JOIN post_tags ON posts.id = post_tags.post_id").
+			Joins("JOIN tags ON tags.id = post_tags.tag_id").
 			Where("tags.slug = ?", tag)
 	}
 
 	if search != "" {
 		search = "%" + strings.ToLower(search) + "%"
-		query = query.Where("LOWER(entry_title) LIKE ? OR LOWER(content) LIKE ?", search, search)
+		query = query.Where("LOWER(title) LIKE ? OR LOWER(content) LIKE ?", search, search)
 	}
 
 	var total int64
 	query.Count(&total)
 
-	var entries []models.Entry
+	var entries []models.Post
 	query.Preload("Author").Preload("Pages").Preload("Tags").
 		Order("created_at DESC").
 		Offset(offset).Limit(perPage).
@@ -83,7 +83,7 @@ func APIGetPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var entry models.Entry
+	var entry models.Post
 	if err := db.DB.Preload("Author").Preload("Pages").Preload("Tags").
 		Preload("Comments", "status = ?", "approved").
 		Where("slug = ? AND status = ?", slug, "published").
@@ -134,7 +134,7 @@ func APISubmitCommentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	comment := models.Comment{
-		EntryID: input.PostID,
+		PostID: input.PostID,
 		Author:  input.Author,
 		Email:   input.Email,
 		Content: input.Content,
@@ -217,7 +217,7 @@ func APIGetSessionHandler(w http.ResponseWriter, r *http.Request) {
 
 // APIAdminListPostsHandler returns all posts (including drafts)
 func APIAdminListPostsHandler(w http.ResponseWriter, r *http.Request) {
-	var entries []models.Entry
+	var entries []models.Post
 	db.DB.Preload("Author").Preload("Pages").Preload("Tags").Order("created_at DESC").Find(&entries)
 	JSONResponse(w, http.StatusOK, entries)
 }
@@ -229,9 +229,10 @@ func APIAdminSavePostHandler(w http.ResponseWriter, r *http.Request) {
 		Title   string `json:"title"`
 		Slug    string `json:"slug"`
 		Content string `json:"content"`
-		Status  string `json:"status"`
-		Pages   []uint `json:"pages"`
-		Tags    []uint `json:"tags"`
+		Status    string `json:"status"`
+		CreatedAt string `json:"created_at"`
+		Pages     []uint `json:"pages"`
+		Tags      []uint `json:"tags"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -246,26 +247,36 @@ func APIAdminSavePostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if input.ID > 0 {
-		var entry models.Entry
+		var entry models.Post
 		if err := db.DB.First(&entry, input.ID).Error; err != nil {
 			JSONResponse(w, http.StatusNotFound, map[string]string{"error": "post not found"})
 			return
 		}
-		entry.EntryTitle = input.Title
+		entry.Title = input.Title
 		entry.Slug = input.Slug
 		entry.Content = input.Content
 		entry.Status = input.Status
+		if input.CreatedAt != "" {
+			if t, err := time.Parse(time.RFC3339, input.CreatedAt); err == nil {
+				entry.CreatedAt = t
+			}
+		}
 		if err := db.DB.Save(&entry).Error; err != nil {
 			JSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to update post"})
 			return
 		}
 	} else {
-		entry := models.Entry{
+		entry := models.Post{
 			AccountID:  user.UserID,
-			EntryTitle: input.Title,
+			Title: input.Title,
 			Slug:       input.Slug,
 			Content:    input.Content,
 			Status:     input.Status,
+		}
+		if input.CreatedAt != "" {
+			if t, err := time.Parse(time.RFC3339, input.CreatedAt); err == nil {
+				entry.CreatedAt = t
+			}
 		}
 		if err := db.DB.Create(&entry).Error; err != nil {
 			JSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to create post"})
@@ -275,7 +286,7 @@ func APIAdminSavePostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update associations using input.ID
-	var entry models.Entry
+	var entry models.Post
 	db.DB.First(&entry, input.ID)
 
 	db.DB.Model(&entry).Association("Pages").Clear()
@@ -303,7 +314,7 @@ func APIAdminSavePostHandler(w http.ResponseWriter, r *http.Request) {
 func APIAdminDeletePostHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/admin/posts/")
 	id, _ := strconv.ParseUint(idStr, 10, 32)
-	db.DB.Delete(&models.Entry{}, id)
+	db.DB.Delete(&models.Post{}, id)
 	JSONResponse(w, http.StatusOK, map[string]string{"message": "post deleted"})
 }
 
@@ -331,7 +342,7 @@ func APIAdminUpdateCommentStatusHandler(w http.ResponseWriter, r *http.Request) 
 // APIAdminListStatsHandler returns dashboard stats
 func APIAdminListStatsHandler(w http.ResponseWriter, r *http.Request) {
 	var postCount, commentCount, userCount, pageCount int64
-	db.DB.Model(&models.Entry{}).Count(&postCount)
+	db.DB.Model(&models.Post{}).Count(&postCount)
 	db.DB.Model(&models.Comment{}).Count(&commentCount)
 	db.DB.Model(&models.User{}).Count(&userCount)
 	db.DB.Model(&models.Page{}).Count(&pageCount)

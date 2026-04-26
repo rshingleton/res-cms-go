@@ -34,13 +34,13 @@ func AdminIndexHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Get counts
 	var postCount, commentCount, userCount, pageCount int64
-	db.DB.Model(&models.Entry{}).Count(&postCount)
+	db.DB.Model(&models.Post{}).Count(&postCount)
 	db.DB.Model(&models.Comment{}).Count(&commentCount)
 	db.DB.Model(&models.User{}).Count(&userCount)
 	db.DB.Model(&models.Page{}).Where("is_system = ?", false).Count(&pageCount)
 
 	// Get recent posts
-	var recentPosts []models.Entry
+	var recentPosts []models.Post
 	db.DB.Preload("Author").Order("created_at DESC").Limit(5).Find(&recentPosts)
 
 	// Get pending comments
@@ -69,7 +69,7 @@ func AdminIndexHandler(w http.ResponseWriter, r *http.Request) {
 
 // AdminListPostsHandler lists all posts
 func AdminListPostsHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/manage/entries" {
+	if r.URL.Path != "/manage/posts" {
 		http.NotFound(w, r)
 		return
 	}
@@ -80,13 +80,13 @@ func AdminListPostsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var entries []models.Entry
+	var entries []models.Post
 	db.DB.Preload("Author").Order("created_at DESC").Find(&entries)
 
 	data := map[string]interface{}{
 		"BlogName":  getBlogName(),
 		"User":      user,
-		"Entries":   entries,
+		"Posts":     entries,
 		"ActiveTab": "posts",
 	}
 
@@ -98,7 +98,7 @@ func AdminListPostsHandler(w http.ResponseWriter, r *http.Request) {
 
 // AdminAddPostFormHandler shows add post form
 func AdminAddPostFormHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/manage/entries/new" {
+	if r.URL.Path != "/manage/posts/new" {
 		http.NotFound(w, r)
 		return
 	}
@@ -120,7 +120,7 @@ func AdminAddPostFormHandler(w http.ResponseWriter, r *http.Request) {
 		"User":      user,
 		"Pages":     pages,
 		"Tags":      tags,
-		"Entry":     models.Entry{},
+		"Post":      models.Post{},
 		"IsNew":     true,
 		"ActiveTab": "posts",
 	}
@@ -133,7 +133,7 @@ func AdminAddPostFormHandler(w http.ResponseWriter, r *http.Request) {
 
 // AdminAddPostHandler creates a new post
 func AdminAddPostHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/manage/entries" || r.Method != http.MethodPost {
+	if r.URL.Path != "/manage/posts" || r.Method != http.MethodPost {
 		http.NotFound(w, r)
 		return
 	}
@@ -146,7 +146,7 @@ func AdminAddPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := r.ParseForm(); err != nil {
 		log.Printf("Error parsing form: %v", err)
-		http.Redirect(w, r, "/manage/entries", http.StatusFound)
+		http.Redirect(w, r, "/manage/posts", http.StatusFound)
 		return
 	}
 
@@ -159,22 +159,22 @@ func AdminAddPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	if title == "" || slug == "" {
 		middleware.GenerateFlashCookie(w, "Title and slug are required")
-		http.Redirect(w, r, "/manage/entries/new", http.StatusFound)
+		http.Redirect(w, r, "/manage/posts/new", http.StatusFound)
 		return
 	}
 
-	entry := models.Entry{
+	post := models.Post{
 		AccountID:  user.UserID,
-		EntryTitle: title,
+		Title: title,
 		Slug:       slug,
 		Content:    content,
 		Status:     status,
 	}
 
-	if err := db.DB.Create(&entry).Error; err != nil {
-		log.Printf("Error creating entry: %v", err)
-		middleware.GenerateFlashCookie(w, "Failed to create entry")
-		http.Redirect(w, r, "/manage/entries/new", http.StatusFound)
+	if err := db.DB.Create(&post).Error; err != nil {
+		log.Printf("Error creating post: %v", err)
+		middleware.GenerateFlashCookie(w, "Failed to create post")
+		http.Redirect(w, r, "/manage/posts/new", http.StatusFound)
 		return
 	}
 
@@ -186,7 +186,7 @@ func AdminAddPostHandler(w http.ResponseWriter, r *http.Request) {
 				pages = append(pages, models.Page{ID: uint(pid)})
 			}
 		}
-		db.DB.Model(&entry).Association("Pages").Append(&pages)
+		db.DB.Model(&post).Association("Pages").Append(&pages)
 	}
 
 	// Associate tags
@@ -197,16 +197,16 @@ func AdminAddPostHandler(w http.ResponseWriter, r *http.Request) {
 				tags = append(tags, models.Tag{ID: uint(tid)})
 			}
 		}
-		db.DB.Model(&entry).Association("Tags").Append(&tags)
+		db.DB.Model(&post).Association("Tags").Append(&tags)
 	}
 
-	middleware.GenerateFlashCookie(w, "Entry created successfully")
-	http.Redirect(w, r, "/manage/entries", http.StatusFound)
+	middleware.GenerateFlashCookie(w, "Post created successfully")
+	http.Redirect(w, r, "/manage/posts", http.StatusFound)
 }
 
 // AdminEditPostFormHandler shows edit post form
 func AdminEditPostFormHandler(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "/manage/entries/edit/")
+	idStr := strings.TrimPrefix(r.URL.Path, "/manage/posts/edit/")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
 		http.NotFound(w, r)
@@ -219,8 +219,8 @@ func AdminEditPostFormHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var entry models.Entry
-	if err := db.DB.Preload("Pages").Preload("Tags").First(&entry, id).Error; err != nil {
+	var post models.Post
+	if err := db.DB.Preload("Pages").Preload("Tags").First(&post, id).Error; err != nil {
 		http.NotFound(w, r)
 		return
 	}
@@ -234,7 +234,7 @@ func AdminEditPostFormHandler(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"BlogName":  getBlogName(),
 		"User":      user,
-		"Entry":     entry,
+		"Post":     post,
 		"Pages":     pages,
 		"Tags":      tags,
 		"IsNew":     false,
@@ -249,7 +249,7 @@ func AdminEditPostFormHandler(w http.ResponseWriter, r *http.Request) {
 
 // AdminUpdatePostHandler updates a post
 func AdminUpdatePostHandler(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "/manage/entries/update/")
+	idStr := strings.TrimPrefix(r.URL.Path, "/manage/posts/update/")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
 		http.NotFound(w, r)
@@ -263,7 +263,7 @@ func AdminUpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := r.ParseForm(); err != nil {
 		log.Printf("Error parsing form: %v", err)
-		http.Redirect(w, r, "/manage/entries", http.StatusFound)
+		http.Redirect(w, r, "/manage/posts", http.StatusFound)
 		return
 	}
 
@@ -275,104 +275,104 @@ func AdminUpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 	tagIDs := r.PostForm["tags"]
 
 	updates := map[string]interface{}{
-		"entry_title": title,
-		"slug":        slug,
-		"content":     content,
-		"status":      status,
+		"title":   title,
+		"slug":    slug,
+		"content": content,
+		"status":  status,
 	}
 
-	if err := db.DB.Model(&models.Entry{}).Where("id = ?", id).Updates(updates).Error; err != nil {
-		log.Printf("Error updating entry %d: %v", id, err)
-		middleware.GenerateFlashCookie(w, "Failed to update entry")
-		http.Redirect(w, r, "/manage/entries/edit/"+idStr, http.StatusFound)
+	if err := db.DB.Model(&models.Post{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+		log.Printf("Error updating post %d: %v", id, err)
+		middleware.GenerateFlashCookie(w, "Failed to update post")
+		http.Redirect(w, r, "/manage/posts/edit/"+idStr, http.StatusFound)
 		return
 	}
 
 	// Update pages
-	var entry models.Entry
-	db.DB.First(&entry, id)
+	var post models.Post
+	db.DB.First(&post, id)
 	if len(pageIDs) > 0 {
-		db.DB.Model(&entry).Association("Pages").Clear()
+		db.DB.Model(&post).Association("Pages").Clear()
 		var pages []models.Page
 		for _, id := range pageIDs {
 			if pid, err := strconv.ParseUint(id, 10, 32); err == nil {
 				pages = append(pages, models.Page{ID: uint(pid)})
 			}
 		}
-		db.DB.Model(&entry).Association("Pages").Append(&pages)
+		db.DB.Model(&post).Association("Pages").Append(&pages)
 	}
 
 	// Update tags
 	if len(tagIDs) > 0 {
-		db.DB.Model(&entry).Association("Tags").Clear()
+		db.DB.Model(&post).Association("Tags").Clear()
 		var tags []models.Tag
 		for _, id := range tagIDs {
 			if tid, err := strconv.ParseUint(id, 10, 32); err == nil {
 				tags = append(tags, models.Tag{ID: uint(tid)})
 			}
 		}
-		db.DB.Model(&entry).Association("Tags").Append(&tags)
+		db.DB.Model(&post).Association("Tags").Append(&tags)
 	}
 
-	middleware.GenerateFlashCookie(w, "Entry updated successfully")
-	http.Redirect(w, r, "/manage/entries", http.StatusFound)
+	middleware.GenerateFlashCookie(w, "Post updated successfully")
+	http.Redirect(w, r, "/manage/posts", http.StatusFound)
 }
 
 // AdminDeletePostHandler deletes a post
 func AdminDeletePostHandler(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "/manage/entries/delete/")
+	idStr := strings.TrimPrefix(r.URL.Path, "/manage/posts/delete/")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
 
-	if err := db.DB.Delete(&models.Entry{}, id).Error; err != nil {
-		log.Printf("Error deleting entry: %v", err)
-		middleware.GenerateFlashCookie(w, "Failed to delete entry")
+	if err := db.DB.Delete(&models.Post{}, id).Error; err != nil {
+		log.Printf("Error deleting post: %v", err)
+		middleware.GenerateFlashCookie(w, "Failed to delete post")
 	} else {
-		middleware.GenerateFlashCookie(w, "Entry deleted successfully")
+		middleware.GenerateFlashCookie(w, "Post deleted successfully")
 	}
 
-	http.Redirect(w, r, "/manage/entries", http.StatusFound)
+	http.Redirect(w, r, "/manage/posts", http.StatusFound)
 }
 
 // AdminPublishPostHandler publishes a post
 func AdminPublishPostHandler(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "/manage/entries/publish/")
+	idStr := strings.TrimPrefix(r.URL.Path, "/manage/posts/publish/")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
 
-	if err := db.DB.Model(&models.Entry{}).Where("id = ?", id).Update("status", "published").Error; err != nil {
-		log.Printf("Error publishing entry: %v", err)
-		middleware.GenerateFlashCookie(w, "Failed to publish entry")
+	if err := db.DB.Model(&models.Post{}).Where("id = ?", id).Update("status", "published").Error; err != nil {
+		log.Printf("Error publishing post: %v", err)
+		middleware.GenerateFlashCookie(w, "Failed to publish post")
 	} else {
-		middleware.GenerateFlashCookie(w, "Entry published successfully")
+		middleware.GenerateFlashCookie(w, "Post published successfully")
 	}
 
-	http.Redirect(w, r, "/manage/entries", http.StatusFound)
+	http.Redirect(w, r, "/manage/posts", http.StatusFound)
 }
 
 // AdminDraftPostHandler sets post to draft
 func AdminDraftPostHandler(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "/manage/entries/draft/")
+	idStr := strings.TrimPrefix(r.URL.Path, "/manage/posts/draft/")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
 
-	if err := db.DB.Model(&models.Entry{}).Where("id = ?", id).Update("status", "draft").Error; err != nil {
+	if err := db.DB.Model(&models.Post{}).Where("id = ?", id).Update("status", "draft").Error; err != nil {
 		log.Printf("Error setting draft: %v", err)
 		middleware.GenerateFlashCookie(w, "Failed to set draft")
 	} else {
-		middleware.GenerateFlashCookie(w, "Entry set to draft")
+		middleware.GenerateFlashCookie(w, "Post set to draft")
 	}
 
-	http.Redirect(w, r, "/manage/entries", http.StatusFound)
+	http.Redirect(w, r, "/manage/posts", http.StatusFound)
 }
 
 // ==================== PAGES / TAXONOMY ====================

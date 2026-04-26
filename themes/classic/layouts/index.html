@@ -32,11 +32,11 @@
                 <ul style="list-style: none; padding: 0; margin: 0;">
                     {{range .Sidebar.Recent}}
                     <li style="border-bottom: 1px solid #f0f0f0;">
-                        <a href="/entry/{{.Slug}}"
+                        <a href="/post/{{.Slug}}"
                            class="d-block px-4 py-3 hover-bg-slate-light-5 transition-all"
                            style="text-decoration: none; color: inherit;">
                             <div class="d-flex fx-space-between vcenter">
-                                <div class="font-w700 font-s2 text-slate-900" style="line-height: 1.4;">{{.EntryTitle}}</div>
+                                <div class="font-w700 font-s2 text-slate-900" style="line-height: 1.4;">{{.Title}}</div>
                                 <div class="text-grey font-s1 ml-2">{{.CreatedAt.Format "Jan 02"}}</div>
                             </div>
                         </a>

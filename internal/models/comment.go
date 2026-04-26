@@ -7,7 +7,7 @@ import (
 // Comment represents a post comment
 type Comment struct {
 	ID        uint      `gorm:"primaryKey" json:"id"`
-	EntryID   uint      `gorm:"not null" json:"entry_id"`
+	PostID    uint      `gorm:"not null" json:"post_id"`
 	Author    string    `gorm:"size:100;not null" json:"author"`
 	Email     string    `gorm:"size:100" json:"email"`
 	Content   string    `gorm:"type:text;not null" json:"content"`
@@ -16,7 +16,7 @@ type Comment struct {
 	UpdatedAt time.Time `json:"updated_at"`
 
 	// Associations
-	Post Entry `gorm:"foreignKey:EntryID" json:"post,omitempty"`
+	Post Post `gorm:"foreignKey:PostID" json:"post,omitempty"`
 }
 
 // TableName overrides the table name

@@ -19,10 +19,10 @@
 |--------|------|---------|
 | GET | `/` | `IndexHandler` |
 | GET | `/page/{page}` | `IndexHandler` |
-| GET | `/entry/{slug}` | `PostHandler` |
+| GET | `/post/{slug}` | `PostHandler` |
 | POST | `/comment/add` | `AddCommentHandler` |
-| GET | `/entries/page/{page}` | `PostsByPageHandler` |
-| GET | `/entries/tag/{tag}` | `PostsByTagHandler` |
+| GET | `/posts/page/{page}` | `PostsByPageHandler` |
+| GET | `/posts/tag/{tag}` | `PostsByTagHandler` |
 | GET | `/access/login` | `LoginFormHandler` |
 | POST | `/access/login` | `LoginHandler` |
 | GET | `/access/logout` | `LogoutHandler` |
@@ -32,7 +32,7 @@
 | Method | Path | Handler |
 |--------|------|---------|
 | GET | `/manage` | `AdminIndexHandler` |
-| GET | `/manage/entries` | `AdminListPostsHandler` |
+| GET | `/manage/posts` | `AdminListPostsHandler` |
 | GET | `/manage/themes` | `AdminListThemesHandler` |
 | POST | `/manage/themes/upload` | `AdminUploadThemeHandler` |
 | GET | `/manage/themes/activate/{name}` | `AdminActivateThemeHandler` |
@@ -52,7 +52,7 @@
 | Table | Model | Description |
 |-------|-------|-------------|
 | `users` | `User` | Authentication and profile data |
-| `entries` | `Entry` | Blog posts and static pages |
+| `posts` | `Post` | Blog posts and static pages |
 | `pages` | `Page` | Hierarchical content grouping |
 | `tags` | `Tag` | Flat content tagging |
 | `comments` | `Comment` | User-submitted feedback |
