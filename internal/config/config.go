@@ -36,7 +36,8 @@ type Config struct {
 // DatabaseConfig holds database-specific configuration
 type DatabaseConfig struct {
 	Type    string `yaml:"type"`
-	Path    string `yaml:"path"`
+	Path    string `yaml:"path,omitempty"` // For SQLite
+	DSN     string `yaml:"dsn,omitempty"`  // For MySQL/Postgres
 	WALMode bool   `yaml:"wal_mode,omitempty"`
 }
 

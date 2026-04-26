@@ -165,7 +165,7 @@ func APISubmitCommentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	comment := models.Comment{
-		PostID: input.PostID,
+		PostID:  input.PostID,
 		Author:  input.Author,
 		Email:   input.Email,
 		Content: input.Content,
@@ -256,11 +256,11 @@ func APIAdminListPostsHandler(w http.ResponseWriter, r *http.Request) {
 // APIAdminSavePostHandler creates or updates a post
 func APIAdminSavePostHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		ID      uint   `json:"id"`
-		Title   string `json:"title"`
-		Slug    string `json:"slug"`
-		Content string `json:"content"`
-		Status    string `json:"status"`
+		ID              uint   `json:"id"`
+		Title           string `json:"title"`
+		Slug            string `json:"slug"`
+		Content         string `json:"content"`
+		Status          string `json:"status"`
 		CreatedAt       string `json:"created_at"`
 		CommentsEnabled bool   `json:"comments_enabled"`
 		Pages           []uint `json:"pages"`
@@ -300,9 +300,9 @@ func APIAdminSavePostHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		entry := models.Post{
-			AccountID:  user.UserID,
-			Title: input.Title,
-			Slug:       input.Slug,
+			AccountID:       user.UserID,
+			Title:           input.Title,
+			Slug:            input.Slug,
 			Content:         input.Content,
 			Status:          input.Status,
 			CommentsEnabled: input.CommentsEnabled,

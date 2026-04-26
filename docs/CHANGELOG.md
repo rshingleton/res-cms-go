@@ -2,7 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.0] - 2026-04-26 (Multi-Database Support)
+
+### Added
+- **Multi-Database Backend Support**:
+    - Added support for **MySQL** and **PostgreSQL** alongside SQLite.
+    - Integrated `gorm.io/driver/mysql` and `gorm.io/driver/postgres`.
+    - Automated **Database Bootstrapping**: The application now attempts to create the target database automatically if it does not exist (requires appropriate user permissions like `CREATEDB` in Postgres).
+- **Comprehensive Database Documentation**:
+    - Created `docs/DATABASE_SETUP.md` with detailed instructions for SQLite, MySQL, and PostgreSQL setup.
+    - Included specific troubleshooting for PostgreSQL 15+ schema permissions.
+
+### Changed
+- **Refactored Database Initialization**:
+    - Updated `internal/db` to use a unified `config.Config` object for initialization.
+    - Standardized DSN parsing for URI and Key-Value formats.
+- **Configuration Schema**:
+    - Updated `rescms.yml` and `internal/config` to support a structured `database` configuration block.
+    - Maintained backward compatibility for legacy `sqlite_dsn` settings.
+
+### Fixed
+- **Postgres DSN Parsing**: Resolved issues where URI-based DSNs were not correctly identifying the database name during bootstrapping.
+- **Idempotent Seeding**: Refactored database seeding to use `FirstOrCreate` to prevent unique constraint violations during initialization of existing databases.
+
 ## [2.2.0] - 2026-04-26 (Public Site Fixes & SSR Migration)
+
 
 ### Added
 - **Server-Side Rendering (SSR) Migration**:

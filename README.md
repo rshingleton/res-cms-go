@@ -22,7 +22,7 @@ ResCMS Go is a powerful, lightweight, and highly configurable Content Management
 ## 🛠 Tech Stack
 
 - **Backend**: Go (Golang) 1.22+
-- **Database**: SQLite (via GORM)
+- **Database**: SQLite, MySQL, PostgreSQL (via GORM)
 - **Frontend Logic**: Alpine.js
 - **CSS Frameworks**: Axentix (Unified for Admin and Themes)
 - **Editors**: Monaco (for code), Quill (for content).
@@ -36,7 +36,8 @@ ResCMS Go is a powerful, lightweight, and highly configurable Content Management
    ```
 
 2. Configuration (optional):
-   Edit `rescms.yml` to change the listen port, database path, or production status.
+   Edit `rescms.yml` to change the listen port, database settings, or production status. See [Database Setup](docs/DATABASE_SETUP.md) for detailed database configuration instructions.
+
 
 3. Run the application:
    ```bash

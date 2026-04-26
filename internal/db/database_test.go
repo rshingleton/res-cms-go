@@ -19,6 +19,7 @@ package db
 
 import (
 	"os"
+	"res-cms-go/internal/config"
 	"res-cms-go/internal/models"
 	"testing"
 )
@@ -30,8 +31,15 @@ func TestInit(t *testing.T) {
 	defer os.Remove(dbFile + "-shm")
 	defer os.Remove(dbFile + "-wal")
 
-	dsn := "sqlite:" + dbFile
-	err := Init(dsn, false)
+	cfg := &config.Config{
+		Database: config.DatabaseConfig{
+			Type: "sqlite",
+			Path: dbFile,
+		},
+		Production: false,
+	}
+
+	err := Init(cfg)
 	if err != nil {
 		t.Fatalf("Failed to initialize database: %v", err)
 	}

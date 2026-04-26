@@ -3,6 +3,25 @@ secrets:
 
 listen: :3000
 
-sqlite_dsn: data/rescms.db
-
 production: false
+
+database:
+  type: postgres
+  dsn: host=localhost user=rescms_user password=res_cms_pass dbname=rescms port=5432 sslmode=disable TimeZone=America/New_York
+
+
+# Example SQLite configuration:
+# database:
+#   type: sqlite
+#   path: data/rescms.db
+#   wal_mode: true
+
+# Example MySQL configuration:
+# database:
+#   type: mysql
+#   dsn: user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local
+
+# Example PostgreSQL configuration:
+# database:
+#   type: postgres
+#   dsn: host=localhost user=gorm password=gorm dbname=gorm port=9920 sslmode=disable TimeZone=America/New_York

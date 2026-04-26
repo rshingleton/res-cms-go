@@ -182,9 +182,9 @@ func AdminAddPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	post := models.Post{
-		AccountID:  user.UserID,
-		Title: title,
-		Slug:       slug,
+		AccountID:       user.UserID,
+		Title:           title,
+		Slug:            slug,
 		Content:         content,
 		Status:          status,
 		CommentsEnabled: commentsEnabled,
@@ -253,7 +253,7 @@ func AdminEditPostFormHandler(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
 		"BlogName":  getBlogName(),
 		"User":      user,
-		"Post":     post,
+		"Post":      post,
 		"Pages":     pages,
 		"Tags":      tags,
 		"IsNew":     false,
@@ -295,8 +295,8 @@ func AdminUpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 	commentsEnabled := r.PostForm.Get("comments_enabled") == "on"
 
 	updates := map[string]interface{}{
-		"title":   title,
-		"slug":    slug,
+		"title":            title,
+		"slug":             slug,
 		"content":          content,
 		"status":           status,
 		"comments_enabled": commentsEnabled,
@@ -449,7 +449,7 @@ func AdminAddPageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	page := models.Page{
-		Title:    title,
+		Title:           title,
 		Slug:            slug,
 		Layout:          layout,
 		CommentsEnabled: commentsEnabled,
@@ -541,8 +541,8 @@ func AdminUpdatePageHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Updating page ID %d: title='%s', slug='%s', content_len=%d", id, title, slug, len(content))
 
 	updates := map[string]interface{}{
-		"title":   title,
-		"slug":    slug,
+		"title":            title,
+		"slug":             slug,
 		"content":          content,
 		"layout":           layout,
 		"comments_enabled": commentsEnabled,

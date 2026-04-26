@@ -8,6 +8,8 @@
 - [x] Implement robust Image Resizing for Quill
 - [x] Build custom server-side Image Upload adapter
 - [x] Standardize editorial styling across all themes (Classic & Pixel)
+- [x] **Multi-Database Support**: Added MySQL and PostgreSQL backends.
+
 
 ## Phase 2: Theme Management & Customization (Completed)
 - [x] **Theme Operations**:

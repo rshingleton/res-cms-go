@@ -5,8 +5,9 @@ ResCMS is a modern, Go-based Content Management System. It features an API-drive
 
 ## Technology Stack
 - **Backend**: Go (Golang)
-- **Database**: SQLite (via GORM)
+- **Database**: SQLite, MySQL, PostgreSQL (via GORM)
 - **Frontend Logic**: Alpine.js (with Collapse plugin)
+
 - **Styling**: Axentix CSS (Standardized across Admin and Themes)
 - **Templates**: `html/template` (Go Standard Library)
 - **Editor**: Monaco (for code), Quill (for content)

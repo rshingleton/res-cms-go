@@ -65,11 +65,7 @@ func main() {
 	}
 
 	// Initialize database
-	dsn := cfg.SQLiteDSN
-	if !strings.HasPrefix(dsn, "sqlite:") {
-		dsn = "sqlite:" + dsn
-	}
-	if err := db.Init(dsn, production); err != nil {
+	if err := db.Init(cfg); err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 	defer db.Close()

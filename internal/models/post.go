@@ -23,12 +23,12 @@ import (
 
 // Post represents a blog post
 type Post struct {
-	ID         uint      `gorm:"primaryKey" json:"id"`
-	AccountID  uint      `gorm:"not null" json:"account_id"`
-	Title      string    `gorm:"size:255;not null" json:"title"`
-	Slug       string    `gorm:"uniqueIndex;size:255;not null" json:"slug"`
-	Content    string    `gorm:"type:text" json:"content"`
-	Status     string    `gorm:"default:draft" json:"status"`
+	ID              uint      `gorm:"primaryKey" json:"id"`
+	AccountID       uint      `gorm:"not null" json:"account_id"`
+	Title           string    `gorm:"size:255;not null" json:"title"`
+	Slug            string    `gorm:"uniqueIndex;size:255;not null" json:"slug"`
+	Content         string    `gorm:"type:text" json:"content"`
+	Status          string    `gorm:"default:draft" json:"status"`
 	CommentsEnabled bool      `gorm:"default:true" json:"comments_enabled"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`

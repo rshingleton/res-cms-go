@@ -474,13 +474,13 @@ func PostsByAccountHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Render template
 	data := map[string]interface{}{
-		"Posts":             entries,
-		"BlogName":          blogName,
-		"Sidebar":           sidebar,
-		"Page":              page,
-		"TotalPages":        (total + int64(perPage) - 1) / int64(perPage),
-		"PostsForAccount":   accountName,
-		"User":              middleware.OptionalUser(r),
+		"Posts":           entries,
+		"BlogName":        blogName,
+		"Sidebar":         sidebar,
+		"Page":            page,
+		"TotalPages":      (total + int64(perPage) - 1) / int64(perPage),
+		"PostsForAccount": accountName,
+		"User":            middleware.OptionalUser(r),
 	}
 
 	if err := renderTemplate(w, r, "public/index.html", data); err != nil {
@@ -633,7 +633,7 @@ var renderTemplate = func(w http.ResponseWriter, r *http.Request, name string, d
 		}
 
 		log.Printf("Executing template %s with layout %s", name, layout)
-		
+
 		// Buffer the output
 		var buf strings.Builder
 		if err := t.ExecuteTemplate(&buf, layout, data); err != nil {

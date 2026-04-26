@@ -6,8 +6,9 @@ ResCMS Go has been fully migrated to a Go backend and stabilized for production 
 
 ## 🛠 Technical Stack
 - **Backend**: Go 1.22+ (using standard `http.ServeMux` with path values).
-- **Database**: SQLite (`rescms.db`).
+- **Database**: SQLite, MySQL, and PostgreSQL (via GORM).
 - **Editor**: Monaco (for code), Quill (for content).
+
 - **Frontend Logic**: Alpine.js (with Collapse plugin) for reactivity.
 - **Styling**: Axentix CSS (Standardized for both Admin and Themes).
 - **Theme Engine**: Dynamic template loader with automated CSS/JS/HTML injection.

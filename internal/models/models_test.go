@@ -83,13 +83,13 @@ func TestPostCreation(t *testing.T) {
 
 	// Create entry
 	entry := Post{
-		AccountID:  user.ID,
-		Title: "Hello World",
-		Slug:       "hello-world",
-		Content:    "This is a test post.",
-		Status:     "published",
-		Pages:      []Page{page},
-		Tags:       []Tag{tag},
+		AccountID: user.ID,
+		Title:     "Hello World",
+		Slug:      "hello-world",
+		Content:   "This is a test post.",
+		Status:    "published",
+		Pages:     []Page{page},
+		Tags:      []Tag{tag},
 	}
 
 	if err := db.Create(&entry).Error; err != nil {
@@ -126,14 +126,14 @@ func TestCommentCreation(t *testing.T) {
 
 	// Create entry first
 	entry := Post{
-		AccountID:  1,
-		Title: "Post for comments",
-		Slug:       "post-for-comments",
+		AccountID: 1,
+		Title:     "Post for comments",
+		Slug:      "post-for-comments",
 	}
 	db.Create(&entry)
 
 	comment := Comment{
-		PostID: entry.ID,
+		PostID:  entry.ID,
 		Author:  "John Doe",
 		Content: "Nice post!",
 		Status:  "approved",

@@ -23,12 +23,12 @@ import (
 
 // Page represents a standalone page that can also act as a category/taxonomy
 type Page struct {
-	ID        uint      `gorm:"primaryKey" json:"id"`
-	Title     string    `gorm:"size:255;not null" json:"title"`
-	Slug      string    `gorm:"uniqueIndex;size:255;not null" json:"slug"`
-	Content   string    `gorm:"type:text" json:"content"`
-	IsSystem  bool      `gorm:"default:false" json:"is_system"`
-	SortOrder int       `gorm:"default:0" json:"sort_order"`
+	ID              uint      `gorm:"primaryKey" json:"id"`
+	Title           string    `gorm:"size:255;not null" json:"title"`
+	Slug            string    `gorm:"uniqueIndex;size:255;not null" json:"slug"`
+	Content         string    `gorm:"type:text" json:"content"`
+	IsSystem        bool      `gorm:"default:false" json:"is_system"`
+	SortOrder       int       `gorm:"default:0" json:"sort_order"`
 	Layout          string    `gorm:"size:255" json:"layout"`
 	CommentsEnabled bool      `gorm:"default:true" json:"comments_enabled"`
 	CreatedAt       time.Time `json:"created_at"`
