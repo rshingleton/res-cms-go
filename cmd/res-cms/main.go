@@ -18,6 +18,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"html/template"
@@ -30,6 +31,7 @@ import (
 	"res-cms-go/internal/handlers"
 	"res-cms-go/internal/middleware"
 	"res-cms-go/internal/models"
+	"res-cms-go/internal/plugin"
 	"res-cms-go/internal/session"
 	"res-cms-go/internal/theme"
 	"strings"
@@ -83,6 +85,20 @@ func main() {
 
 	// Initialize Theme Engine
 	handlers.ThemeEngine = theme.NewEngine("themes")
+
+	// Initialize Plugin Manager
+	ctx := context.Background()
+	registry := plugin.NewRegistry()
+	handlers.PluginManager = plugin.NewManager(ctx, plugin.PluginsDir, registry)
+
+	// Load enabled plugins from database
+	var enabledPlugins []models.Plugin
+	db.DB.Where("enabled = ?", true).Find(&enabledPlugins)
+	var enabledSlugs []string
+	for _, p := range enabledPlugins {
+		enabledSlugs = append(enabledSlugs, p.Slug)
+	}
+	handlers.PluginManager.LoadAll(enabledSlugs)
 
 	// Get active theme from settings or default
 	activeTheme := "classic"
@@ -144,6 +160,9 @@ func main() {
 	mux.HandleFunc("/api/v1/settings", handlers.APIGetSettingsHandler)
 	mux.HandleFunc("/api/v1/session", handlers.APIGetSessionHandler)
 
+	// Register Plugin Route Hooks
+	registry.ApplyRouteHooks(mux)
+
 	// Admin API Routes (Protected)
 	mux.Handle("/api/admin/posts", middleware.Auth(http.HandlerFunc(handlers.APIAdminListPostsHandler)))
 	mux.Handle("/api/admin/posts/save", middleware.Auth(http.HandlerFunc(handlers.APIAdminSavePostHandler)))
@@ -189,6 +208,11 @@ func main() {
 	adminMux.HandleFunc("/manage/themes/upload", handlers.AdminUploadThemeHandler)
 	adminMux.HandleFunc("/manage/themes/activate/{name}", handlers.AdminActivateThemeHandler)
 	adminMux.HandleFunc("/manage/themes/export/{name}", handlers.AdminExportThemeHandler)
+	adminMux.HandleFunc("/manage/plugins", handlers.AdminListPluginsHandler)
+	adminMux.HandleFunc("POST /manage/plugins/upload", handlers.AdminUploadPluginHandler)
+	adminMux.HandleFunc("POST /manage/plugins/toggle/{slug}", handlers.AdminTogglePluginHandler)
+	adminMux.HandleFunc("POST /manage/plugins/reload/{slug}", handlers.AdminReloadPluginHandler)
+	adminMux.HandleFunc("POST /manage/plugins/delete/{slug}", handlers.AdminDeletePluginHandler)
 
 	// Wrap admin routes with auth middleware
 	mux.Handle("/manage/", middleware.Auth(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

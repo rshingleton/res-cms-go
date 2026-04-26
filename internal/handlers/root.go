@@ -26,6 +26,7 @@ import (
 	"res-cms-go/internal/db"
 	"res-cms-go/internal/middleware"
 	"res-cms-go/internal/models"
+	"res-cms-go/internal/plugin"
 	"res-cms-go/internal/session"
 	"res-cms-go/internal/theme"
 	"strconv"
@@ -73,17 +74,33 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	var entries []models.Post
 	var total int64
 
-	db.DB.Model(&models.Post{}).Where("status = ?", "published").Count(&total)
+	db.DB.Model(&models.Post{}).Where("LOWER(status) = ?", "published").Count(&total)
 
 	offset := (page - 1) * perPage
 	if err := db.DB.Preload("Author").Preload("Pages").Preload("Tags").
-		Where("status = ?", "published").
+		Where("LOWER(status) = ?", "published").
 		Order("created_at DESC").
 		Offset(offset).Limit(perPage).
 		Find(&entries).Error; err != nil {
 		log.Printf("Error fetching entries: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
+	}
+
+	if PluginManager != nil {
+		for i := range entries {
+			payload := plugin.ContentPayload{
+				ID:      entries[i].ID,
+				Type:    "post",
+				Title:   entries[i].Title,
+				Content: entries[i].Content,
+				Slug:    entries[i].Slug,
+			}
+			if newPayload, err := PluginManager.Registry.FireContentHook(plugin.HookContentPreRender, payload); err == nil {
+				entries[i].Title = newPayload.Title
+				entries[i].Content = newPayload.Content
+			}
+		}
 	}
 
 	// Get blog name
@@ -143,8 +160,8 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 	var entry models.Post
 	if err := db.DB.Preload("Author").Preload("Pages").Preload("Tags").
 		Preload("Comments", "status = ?", "approved").
-		Preload("Comments.Post"). // Need to update Comment model next
-		Where("slug = ? AND status = ?", slug, "published").
+		Preload("Comments.Post").
+		Where("slug = ? AND LOWER(status) = ?", slug, "published").
 		First(&entry).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			http.NotFound(w, r)
@@ -153,6 +170,22 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error fetching entry: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
+	}
+
+	if PluginManager != nil {
+		payload := plugin.ContentPayload{
+			ID:      entry.ID,
+			Type:    "post",
+			Title:   entry.Title,
+			Content: entry.Content,
+			Slug:    entry.Slug,
+		}
+		if newPayload, err := PluginManager.Registry.FireContentHook(plugin.HookContentPreRender, payload); err == nil {
+			entry.Title = newPayload.Title
+			entry.Content = newPayload.Content
+		} else {
+			log.Printf("plugin: FireContentHook failed for post %s: %v", entry.Slug, err)
+		}
 	}
 
 	// Get blog name
@@ -196,6 +229,22 @@ func PageHandler(w http.ResponseWriter, r *http.Request) {
 	if err := db.DB.Where("slug = ?", slug).First(&page).Error; err != nil {
 		http.NotFound(w, r)
 		return
+	}
+
+	if PluginManager != nil {
+		payload := plugin.ContentPayload{
+			ID:      page.ID,
+			Type:    "page",
+			Title:   page.Title,
+			Content: page.Content,
+			Slug:    page.Slug,
+		}
+		if newPayload, err := PluginManager.Registry.FireContentHook(plugin.HookContentPreRender, payload); err == nil {
+			page.Title = newPayload.Title
+			page.Content = newPayload.Content
+		} else {
+			log.Printf("plugin: FireContentHook failed for page %s: %v", page.Slug, err)
+		}
 	}
 
 	// Get blog name
@@ -586,6 +635,34 @@ var renderTemplate = func(w http.ResponseWriter, r *http.Request, name string, d
 		data["res_custom_footer_html_parsed"] = template.HTML(settingsMap["custom_footer_html"])
 	} else {
 		data["res_custom_footer_html_parsed"] = template.HTML("")
+	}
+
+	// Apply Asset Hooks
+	if PluginManager != nil {
+		var headPayload plugin.AssetPayload
+		if newPayload, err := PluginManager.Registry.FireAssetHook(plugin.HookAssetHead, headPayload); err == nil {
+			var inj strings.Builder
+			if newPayload.CSS != "" {
+				inj.WriteString("<style>\n" + newPayload.CSS + "\n</style>\n")
+			}
+			if newPayload.JS != "" {
+				inj.WriteString("<script>\n" + newPayload.JS + "\n</script>\n")
+			}
+			inj.WriteString(newPayload.HTML)
+			current := string(data["res_custom_header_html_parsed"].(template.HTML))
+			data["res_custom_header_html_parsed"] = template.HTML(current + "\n" + inj.String())
+		}
+
+		var footerPayload plugin.AssetPayload
+		if newPayload, err := PluginManager.Registry.FireAssetHook(plugin.HookAssetFooter, footerPayload); err == nil {
+			var inj strings.Builder
+			if newPayload.JS != "" {
+				inj.WriteString("<script>\n" + newPayload.JS + "\n</script>\n")
+			}
+			inj.WriteString(newPayload.HTML)
+			current := string(data["res_custom_footer_html_parsed"].(template.HTML))
+			data["res_custom_footer_html_parsed"] = template.HTML(current + "\n" + inj.String())
+		}
 	}
 
 	// Set default values

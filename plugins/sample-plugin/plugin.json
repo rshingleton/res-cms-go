@@ -1,0 +1,21 @@
+{
+    "slug": "sample-plugin",
+    "name": "Sample WASM Plugin",
+    "version": "1.0.0",
+    "author": "ResCMS Team",
+    "description": "A sample plugin written in Go that appends text to all rendered posts and injects an HTML comment into the footer.",
+    "license": "GPLv3",
+    "hooks": [
+        "content.pre_render",
+        "asset.footer",
+        "route.register"
+    ],
+    "permissions": [
+        "content_read",
+        "content_write",
+        "asset_inject",
+        "route_register"
+    ],
+    "wasm_file": "plugin.wasm",
+    "checksum": "fdaf1e7489bbfa1919d8df4b2cc02165002821f22a36af3434889dad0ced5e9c"
+}

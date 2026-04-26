@@ -30,10 +30,17 @@ A centralized hub for all site-wide code modifications.
 - **Admin Unified Handlers**: Single POST endpoints for managing filesystem (themes) and database (settings) updates.
 - **Root Render Engine**: Optimized `renderTemplate` function that maps global settings to theme variables (`res_` prefix).
 
-### 4. Database Models (`internal/models`)
+### 4. WASM Plugin Framework (`internal/plugin`)
+High-performance, sandboxed extensibility layer.
+- **Embedded Runtime**: Uses `wazero` for zero-dependency WASM execution.
+- **Hook System**: Intercepts lifecycle events (Content Save/Render, Asset Injection, Route Registration).
+- **Security**: Strict permission validation and checksum integrity checks for every plugin.
+
+### 5. Database Models (`internal/models`)
 - **Post**: Represents a blog post or primary content item.
 - **Page**: Handles hierarchical grouping (categories) and static standalone pages.
-- **SiteSetting**: Stores all configuration and global customizations (CSS, JS, Header/Footer HTML).
+- **Plugin**: Stores plugin state (enabled/disabled) and metadata.
+- **SiteSetting**: Stores all configuration and global customizations.
 
 ## Project Structure
 ```text
@@ -44,6 +51,7 @@ res-cms-go/
 │   ├── handlers/         # Unified Admin and Public handlers
 │   ├── middleware/       # Auth, Flash, and Context logic
 │   ├── models/           # Data structures
+│   ├── plugin/           # WASM Runtime & Bridge logic
 │   ├── theme/            # Core Engine logic
 │   └── ui/               # Admin UI Templates
 ├── themes/               # Theme Library (classic, pixel-standard)

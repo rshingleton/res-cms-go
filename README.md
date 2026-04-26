@@ -14,6 +14,7 @@ ResCMS Go is a powerful, lightweight, and highly configurable Content Management
 - **Reactive Admin UI**: A fully-featured administrative dashboard built with Alpine.js and Axentix for a seamless management experience.
 - **Axentix Integration**: The entire application (Admin & Public Themes) is built on the Axentix CSS framework, providing a component-based, stable layout engine.
 - **Theme Hot Reloading**: Instant feedback for theme developers—see changes to templates and partials without restarting the server.
+- **WASM Plugin Framework**: Extend core CMS logic with sandboxed, multi-language plugins (Go, Rust, etc.) using `wazero`.
 - **API-First Architecture**: Built-in JSON APIs for posts, pages, tags, and comments.
 - **Multiple Built-in Themes**:
     - **Pixel Standard**: A premium 8-bit aesthetic for gaming, creative, or retro-styled blogs.
@@ -58,6 +59,15 @@ Themes are located in the `/themes` directory. Each theme requires:
 - `partials/`: Reusable components like headers and footers.
 
 Detailed specifications can be found in `docs/THEME_SPEC.md`.
+
+## 🧩 Plugin Development
+
+ResCMS features a sandboxed WASM plugin system. Plugins allow you to:
+- Modify content before it's saved or rendered.
+- Inject custom CSS/JS/HTML into any page.
+- Register new API routes.
+
+See `docs/PLUGIN_SPEC.md` for the full technical specification and ABI contract.
 
 ## 📄 License
 

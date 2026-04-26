@@ -25,6 +25,7 @@ import (
 	"res-cms-go/internal/db"
 	"res-cms-go/internal/middleware"
 	"res-cms-go/internal/models"
+	"res-cms-go/internal/plugin"
 	"strconv"
 	"strings"
 
@@ -181,6 +182,20 @@ func AdminAddPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if PluginManager != nil {
+		payload := plugin.ContentPayload{
+			Type:    "post",
+			Title:   title,
+			Content: content,
+			Slug:    slug,
+		}
+		if newPayload, err := PluginManager.Registry.FireContentHook(plugin.HookContentPreSave, payload); err == nil {
+			title = newPayload.Title
+			content = newPayload.Content
+			slug = newPayload.Slug
+		}
+	}
+
 	post := models.Post{
 		AccountID:       user.UserID,
 		Title:           title,
@@ -293,6 +308,21 @@ func AdminUpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 	pageIDs := r.PostForm["pages"]
 	tagIDs := r.PostForm["tags"]
 	commentsEnabled := r.PostForm.Get("comments_enabled") == "on"
+
+	if PluginManager != nil {
+		payload := plugin.ContentPayload{
+			ID:      uint(id),
+			Type:    "post",
+			Title:   title,
+			Content: content,
+			Slug:    slug,
+		}
+		if newPayload, err := PluginManager.Registry.FireContentHook(plugin.HookContentPreSave, payload); err == nil {
+			title = newPayload.Title
+			content = newPayload.Content
+			slug = newPayload.Slug
+		}
+	}
 
 	updates := map[string]interface{}{
 		"title":            title,

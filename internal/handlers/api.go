@@ -28,6 +28,7 @@ import (
 	"res-cms-go/internal/db"
 	"res-cms-go/internal/middleware"
 	"res-cms-go/internal/models"
+	"res-cms-go/internal/plugin"
 	"strconv"
 	"strings"
 	"time"
@@ -82,6 +83,22 @@ func APIListPostsHandler(w http.ResponseWriter, r *http.Request) {
 		Order("created_at DESC").
 		Offset(offset).Limit(perPage).
 		Find(&entries)
+
+	if PluginManager != nil {
+		for i := range entries {
+			payload := plugin.ContentPayload{
+				ID:      entries[i].ID,
+				Type:    "post",
+				Title:   entries[i].Title,
+				Content: entries[i].Content,
+				Slug:    entries[i].Slug,
+			}
+			if newPayload, err := PluginManager.Registry.FireContentHook(plugin.HookContentPreRender, payload); err == nil {
+				entries[i].Title = newPayload.Title
+				entries[i].Content = newPayload.Content
+			}
+		}
+	}
 
 	JSONResponse(w, http.StatusOK, map[string]interface{}{
 		"posts":       entries,
@@ -279,6 +296,21 @@ func APIAdminSavePostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if input.ID > 0 {
+		if PluginManager != nil {
+			payload := plugin.ContentPayload{
+				ID:      input.ID,
+				Type:    "post",
+				Title:   input.Title,
+				Content: input.Content,
+				Slug:    input.Slug,
+			}
+			if newPayload, err := PluginManager.Registry.FireContentHook(plugin.HookContentPreSave, payload); err == nil {
+				input.Title = newPayload.Title
+				input.Content = newPayload.Content
+				input.Slug = newPayload.Slug
+			}
+		}
+
 		var entry models.Post
 		if err := db.DB.First(&entry, input.ID).Error; err != nil {
 			JSONResponse(w, http.StatusNotFound, map[string]string{"error": "post not found"})
@@ -299,6 +331,20 @@ func APIAdminSavePostHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
+		if PluginManager != nil {
+			payload := plugin.ContentPayload{
+				Type:    "post",
+				Title:   input.Title,
+				Content: input.Content,
+				Slug:    input.Slug,
+			}
+			if newPayload, err := PluginManager.Registry.FireContentHook(plugin.HookContentPreSave, payload); err == nil {
+				input.Title = newPayload.Title
+				input.Content = newPayload.Content
+				input.Slug = newPayload.Slug
+			}
+		}
+
 		entry := models.Post{
 			AccountID:       user.UserID,
 			Title:           input.Title,

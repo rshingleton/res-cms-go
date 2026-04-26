@@ -257,6 +257,7 @@ func migrate() error {
 		&models.Tag{},
 		&models.Comment{},
 		&models.SiteSetting{},
+		&models.Plugin{},
 	)
 }
 

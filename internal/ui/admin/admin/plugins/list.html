@@ -1,0 +1,105 @@
+{{define "content"}}
+<div class="d-flex vcenter mb-4">
+    <h2 class="font-w900 font-s6 text-slate-dark-3 m-0">Plugin Manager</h2>
+    <button data-target="upload-modal" class="btn blue light-4 text-blue-dark-3 shadow-1 rounded-1 font-w800 ml-auto modal-trigger">
+        <i class="fas fa-upload mr-2"></i> Upload Plugin
+    </button>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal shadow-1 white rounded-1" id="upload-modal" data-ax="modal">
+    <div class="modal-header font-w800 font-s4 border-bottom-1 border-slate-light-4 text-slate-dark-3">
+        Install Plugin
+    </div>
+    <form action="/manage/plugins/upload" method="POST" enctype="multipart/form-data">
+        <div class="modal-content p-4">
+            <p class="mb-4 text-slate-dark-1">Upload a plugin zip archive containing the `plugin.json` manifest and `.wasm` binary.</p>
+            <div class="form-field">
+                <input type="file" name="plugin_file" accept=".zip" required class="form-control" />
+            </div>
+        </div>
+        <div class="modal-footer border-top-1 border-slate-light-4 d-flex">
+            <button type="button" class="btn light border-all-1 border-slate-light-4 text-slate-dark-2 font-w700 rounded-1 ml-auto mr-2" data-target="upload-modal">Cancel</button>
+            <button type="submit" class="btn blue font-w800 shadow-1 rounded-1">Install</button>
+        </div>
+    </form>
+</div>
+
+<div class="grid g-gap-4">
+    {{if not .Plugins}}
+    <div class="col-12">
+        <div class="p-5 text-center bg-slate-light-5 border-all-1 border-slate-light-4 rounded-2 text-slate-dark-2">
+            <i class="fas fa-puzzle-piece font-s8 mb-3 text-slate-light-3"></i>
+            <h3 class="font-w800 mb-2">No Plugins Installed</h3>
+            <p>Upload a WebAssembly plugin to extend ResCMS functionality.</p>
+        </div>
+    </div>
+    {{end}}
+
+    {{range .Plugins}}
+    <div class="col-12 col-md-6">
+        <div class="card white shadow-0 border-all-1 border-slate-light-4 rounded-2 h-100 flex flex-column">
+            <div class="card-header d-flex vcenter border-bottom-1 border-slate-light-4 px-4 py-3">
+                <div>
+                    <h3 class="font-w800 font-s4 text-slate-dark-3 m-0 d-flex vcenter">
+                        {{.Name}} 
+                        <span class="text-slate-light-2 font-s2 ml-2 font-w500">v{{.Version}}</span>
+                    </h3>
+                    <div class="text-slate-light-1 font-s2 mt-1">by {{.Author}}</div>
+                </div>
+                <div class="ml-auto">
+                    {{if .IsLoaded}}
+                        <span class="tag green text-white px-3 py-1 rounded-1 font-w800 font-s2 shadow-1">Active</span>
+                    {{else}}
+                        <span class="tag red text-white px-3 py-1 rounded-1 font-w800 font-s2 shadow-1">Inactive</span>
+                    {{end}}
+                </div>
+            </div>
+            <div class="card-content px-4 py-3 text-slate-dark-1 flex-grow-1 font-s2">
+                <p class="mb-3">{{.Description}}</p>
+                
+                <div class="mb-2">
+                    <strong class="text-slate-dark-2">Hooks:</strong>
+                    {{if .Hooks}}
+                        {{range .Hooks}}
+                            <span class="tag grey light-4 text-slate-dark-2 rounded-1 font-s1 px-2 py-1 mr-1 mb-1">{{.}}</span>
+                        {{end}}
+                    {{else}}
+                        <span class="text-slate-light-2 italic">None</span>
+                    {{end}}
+                </div>
+                <div>
+                    <strong class="text-slate-dark-2">Permissions:</strong>
+                    {{if .Permissions}}
+                        {{range .Permissions}}
+                            <span class="tag blue light-4 text-blue-dark-2 rounded-1 font-s1 px-2 py-1 mr-1 mb-1">{{.}}</span>
+                        {{end}}
+                    {{else}}
+                        <span class="text-slate-light-2 italic">None</span>
+                    {{end}}
+                </div>
+            </div>
+            <div class="card-footer px-4 py-3 border-top-1 border-slate-light-4 bg-slate-light-5 d-flex vcenter mt-auto">
+                <form action="/manage/plugins/toggle/{{.Slug}}" method="POST" class="m-0 mr-2">
+                    <button type="submit" class="btn {{if .Enabled}}grey light-3 text-slate-dark-2{{else}}green shadow-1{{end}} btn-small rounded-1 font-w800">
+                        {{if .Enabled}}<i class="fas fa-power-off mr-1"></i> Disable{{else}}<i class="fas fa-bolt mr-1"></i> Enable{{end}}
+                    </button>
+                </form>
+                {{if .Enabled}}
+                <form action="/manage/plugins/reload/{{.Slug}}" method="POST" class="m-0 mr-2">
+                    <button type="submit" class="btn blue light-4 text-blue-dark-2 btn-small rounded-1 font-w800" title="Hot Reload">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </form>
+                {{end}}
+                <form action="/manage/plugins/delete/{{.Slug}}" method="POST" class="m-0 ml-auto" onsubmit="return confirm('Delete this plugin? This cannot be undone.');">
+                    <button type="submit" class="btn red light-4 text-red-dark-2 btn-small rounded-1 font-w800" title="Delete Plugin">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {{end}}
+</div>
+{{end}}
