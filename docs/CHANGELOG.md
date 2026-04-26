@@ -24,7 +24,9 @@ All notable changes to this project will be documented in this file.
 - **Monaco Editor Stability**: Finalized the "nuclear" flexbox layout fixes to prevent the editor from collapsing to 1px height.
 
 ### Housekeeping
-- **Repository Hygiene**: Updated `.gitignore` to exclude `*.db`, SQLite journal files, and binary build artifacts (including the `res-cms` executable).
+- **Repository Hygiene**: Updated `.gitignore` to exclude `*.db`, SQLite journal files, and binary build artifacts.
+- **Remnant Cleanup**: Removed obsolete `migrate-categories` command and various development/test remnants from the root directory (`test_template.go`, `editor_test.html`, `cookie.txt`, etc.).
+- **Untracked Binaries**: Removed local build artifacts (the `res-cms` binary) and database files from the repository's tracked index.
 
 ## [2.1.0] - 2026-04-26 (Editor Stability & Monaco Fixes)
 
